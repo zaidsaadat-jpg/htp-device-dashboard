@@ -708,8 +708,8 @@ td.lvl.L5 { color: #666; } td.lvl.L6, td.lvl.L7, td.lvl.L8, td.lvl.L9, td.lvl.L1
           <div class="cad-control-group">
             <span class="cad-label">Material:</span>
             <div class="cad-chips" id="materialChips">
-              <button class="cad-chip" data-id="original" onclick="setMaterialPreset('original')">Original</button>
-              <button class="cad-chip active" data-id="matte" onclick="setMaterialPreset('matte')">Matte</button>
+              <button class="cad-chip active" data-id="original" onclick="setMaterialPreset('original')">Original</button>
+              <button class="cad-chip" data-id="matte" onclick="setMaterialPreset('matte')">Matte</button>
               <button class="cad-chip" data-id="gloss" onclick="setMaterialPreset('gloss')">Gloss</button>
               <button class="cad-chip" data-id="metal" onclick="setMaterialPreset('metal')">Metal</button>
               <button class="cad-chip" data-id="fabric" onclick="setMaterialPreset('fabric')">Fabric</button>
@@ -871,10 +871,6 @@ function escapeHtml(s) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-/* ============================================================
-   COST ENGINE (v3.0 category-aware)
-   ============================================================ */
-
 function getTierMultipliers() {
   const tier = data.assumptions.supplierTiers[currentTier];
   return tier || { laborMultiplier: 1, machineMultiplier: 1, overheadMultiplier: 1, moqMultiplier: 1, marginPercent: 12 };
@@ -945,10 +941,6 @@ function calc(p, locOverride, matOverride) {
 
   return { tree, fob, mat, lab, ovh, margin, byCategory: cat };
 }
-
-/* ============================================================
-   FEEDS
-   ============================================================ */
 
 function loadFeedConfig() { try { feedConfig = JSON.parse(localStorage.getItem(FEED_CONFIG_KEY) || '{}') || {}; } catch(e) { feedConfig = {}; } }
 function saveFeedConfig() { try { localStorage.setItem(FEED_CONFIG_KEY, JSON.stringify(feedConfig)); } catch(e) {} }
@@ -1067,10 +1059,6 @@ function updateFeedField(key, field, value) {
   saveFeedConfig(); renderFeedBadge(); renderFeedsEditor();
 }
 
-/* ============================================================
-   CARBON
-   ============================================================ */
-
 function calcCarbon(product) {
   let materialsCO2e = 0;
   function walk(n) {
@@ -1160,10 +1148,6 @@ function renderCarbonSection() {
   });
 }
 
-/* ============================================================
-   QUOTES
-   ============================================================ */
-
 function loadQuotes() { try { quotedFobs = JSON.parse(localStorage.getItem(QUOTES_KEY) || '{}') || {}; } catch(e) { quotedFobs = {}; } }
 function saveQuotes() { try { localStorage.setItem(QUOTES_KEY, JSON.stringify(quotedFobs)); } catch(e) {} }
 function getQuotedFob(product) {
@@ -1241,10 +1225,6 @@ function resetQuotes() {
   if (!confirm('Clear all entered quotes? Should-cost values will still be shown.')) return;
   quotedFobs = {}; saveQuotes(); renderNegotiationTab(); closeNegotiationBrief();
 }
-
-/* ============================================================
-   NEGOTIATION BRIEF
-   ============================================================ */
 
 function openNegotiationBrief(productId) { currentBriefProduct = productId; renderNegotiationBrief(productId); }
 function openAllBriefs() {
@@ -1387,10 +1367,6 @@ function copyNegotiationBrief() {
   copyToClipboard(textEl.textContent, 'Brief copied to clipboard.');
 }
 
-/* ============================================================
-   LANDED COST MATRIX
-   ============================================================ */
-
 function getComputedMatrix(e2e) {
   if (!e2e) return [];
   const rules = e2e.tradeRules;
@@ -1425,10 +1401,6 @@ function getComputedMatrix(e2e) {
   }
   return out;
 }
-
-/* ============================================================
-   TARIFF SIMULATOR
-   ============================================================ */
 
 const TARIFF_KEY_PAIRS = [
   { src: 'china',    dst: 'uk',      label: '🇨🇳 China → 🇬🇧 UK' },
@@ -1502,10 +1474,6 @@ function renderTariffDeltaBadge() {
   if (changed === 0) el.style.display = 'none';
   else { el.style.display = 'inline-block'; el.textContent = '● ' + changed + ' tariff' + (changed === 1 ? '' : 's') + ' modified'; }
 }
-
-/* ============================================================
-   COMPETITIVE INTELLIGENCE
-   ============================================================ */
 
 function getComparePair() {
   if (!data || !data.products || data.products.length < 2) return { a: null, b: null };
@@ -1856,10 +1824,6 @@ function renderBenchmarkCards(benchmarks) {
   });
 }
 
-/* ============================================================
-   FORECAST
-   ============================================================ */
-
 function getEffectiveForecastRate(driverId, qIdx) {
   if (!data.forecasts) return 0;
   const driver = data.forecasts.drivers.find(d => d.id === driverId);
@@ -2000,10 +1964,6 @@ function renderDriverTable() {
   t.innerHTML = h + '</tbody>';
 }
 
-/* ============================================================
-   URL DEEP LINKS
-   ============================================================ */
-
 function syncUrl() {
   if (!data) return;
   const params = new URLSearchParams();
@@ -2090,10 +2050,6 @@ function applyUrlState(u) {
     }, 150);
   }
 }
-
-/* ============================================================
-   SCENARIOS
-   ============================================================ */
 
 function isValidScenario(s) {
   return s && typeof s === 'object' && typeof s.id === 'string' && s.id.length > 0
@@ -2402,10 +2358,6 @@ function renderScenarioCompare() {
   }
 }
 
-/* ============================================================
-   LOAD
-   ============================================================ */
-
 async function load() {
   try {
     const r = await fetch('cost_data.json');
@@ -2487,10 +2439,6 @@ function showTab(name, btn) {
   syncUrl();
 }
 
-/* ============================================================
-   DASHBOARD — Company Rows
-   ============================================================ */
-
 function renderCompanyRows() {
   const wrap = document.getElementById('companyRows'); if (!wrap) return;
   wrap.innerHTML = '';
@@ -2562,10 +2510,6 @@ function onCompanyDeviceChange(brand, productId) {
   companySelections[brand] = productId;
   safeRender('companyRows', renderCompanyRows);
 }
-
-/* ============================================================
-   DEEP DIVE (drilldown)
-   ============================================================ */
 
 function selectProduct(id) {
   selected = data.products.find(p => p.id === id);
@@ -2770,10 +2714,6 @@ function updateMOQDisplay() {
   });
 }
 
-/* ============================================================
-   ASSUMPTIONS TAB
-   ============================================================ */
-
 function renderAssumptionEditors() {
   const tabs = document.getElementById('locTabs'); if (!tabs) return;
   tabs.innerHTML = '';
@@ -2861,10 +2801,6 @@ function exportAssumptions() {
   const blob = new Blob([JSON.stringify(data.assumptions, null, 2)], { type: 'application/json' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'htp_assumptions.json'; a.click();
 }
-
-/* ============================================================
-   E2E TAB
-   ============================================================ */
 
 function renderE2ETab() {
   const e2e = data.endToEnd; if (!e2e) return;
@@ -2989,10 +2925,6 @@ function renderRetailByMarket(e2e) {
   });
 }
 
-/* ============================================================
-   PROCESS FLOW
-   ============================================================ */
-
 function renderProcessTab() {
   if (!data.processFlow) return;
   const product = selected || data.products[0];
@@ -3053,10 +2985,6 @@ function renderProcessCards(fob) {
     container.appendChild(card);
   });
 }
-
-/* ============================================================
-   BOOT
-   ============================================================ */
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load);
 else load();
