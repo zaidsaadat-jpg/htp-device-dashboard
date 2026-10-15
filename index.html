@@ -28,15 +28,41 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .container { max-width: 1700px; margin: 0 auto; padding: 25px 20px; }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
-.card { background: #fff; border-radius: 12px; padding: 22px; box-shadow: 0 2px 8px rgba(0,0,0,.08); cursor: pointer; border: 2px solid transparent; position: relative; }
-.card:hover { border-color: #111; }
-.card h2 { font-size: 17px; margin-bottom: 4px; }
-.card .cat { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 14px; }
-.row { display: flex; justify-content: space-between; padding: 6px 0; border-top: 1px solid #eee; font-size: 13.5px; }
-.row .lbl { color: #666; } .row .val { font-weight: 600; }
-.row.big { border-top: 2px solid #111; margin-top: 8px; padding-top: 12px; font-size: 16px; }
-.drill { background: #fff; border-radius: 12px; padding: 24px; margin-top: 30px; box-shadow: 0 2px 8px rgba(0,0,0,.08); display: none; }
+
+/* COMPANY ROWS (new dashboard) */
+.company-row { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 18px; box-shadow: 0 2px 8px rgba(0,0,0,.06); border-left: 5px solid #111; }
+.company-row[data-brand="BAT"] { border-left-color: #003087; }
+.company-row[data-brand="PMI"] { border-left-color: #C8102E; }
+.company-row[data-brand="JTI"] { border-left-color: #0066B3; }
+.company-header { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid #eee; }
+.company-name { font-size: 20px; font-weight: 700; color: #111; line-height: 1.3; }
+.company-name .company-code { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 5px; display: block; font-weight: 700; }
+.company-selector { display: flex; flex-direction: column; gap: 5px; min-width: 340px; }
+.company-selector label { font-size: 10px; text-transform: uppercase; color: #888; font-weight: 700; letter-spacing: 0.5px; }
+.company-selector select { padding: 10px 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; font-weight: 600; background: #fff; cursor: pointer; }
+.company-selector select:focus { outline: 2px solid #4a148c; outline-offset: 1px; border-color: #4a148c; }
+.company-summary { display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; align-items: start; }
+.company-cost-lines { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.company-cost-line { background: #f8fafc; border-radius: 8px; padding: 12px 14px; }
+.company-cost-line .lbl { font-size: 10px; text-transform: uppercase; color: #888; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 5px; }
+.company-cost-line .val { font-size: 16px; font-weight: 700; font-family: ui-monospace, monospace; }
+.company-cost-line.highlight { background: #111; color: #fff; }
+.company-cost-line.highlight .lbl { color: #aaa; }
+.company-meta { display: flex; flex-direction: column; gap: 0; }
+.company-meta-line { display: flex; justify-content: space-between; font-size: 13px; padding: 9px 0; border-bottom: 1px solid #f0f0f0; }
+.company-meta-line:last-of-type { border-bottom: none; }
+.company-meta-line .lbl { color: #666; }
+.company-meta-line .val { font-weight: 700; font-family: ui-monospace, monospace; }
+.company-actions { display: flex; gap: 10px; margin-top: 16px; }
+.company-actions button { padding: 10px 18px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.btn-dive { background: #111; color: #fff; }
+.btn-dive:hover { background: #333; }
+@media (max-width: 800px) {
+  .company-summary { grid-template-columns: 1fr; }
+  .company-selector { min-width: 100%; }
+}
+
+.drill { background: #fff; border-radius: 12px; padding: 24px; margin-top: 30px; box-shadow: 0 2px 8px rgba(0,0,0,.08); display: none; border-left: 5px solid #4a148c; }
 .drill.on { display: block; }
 .drill h3 { margin-bottom: 15px; }
 .chartbox { max-width: 380px; margin: 0 auto 25px; }
@@ -105,9 +131,9 @@ td.lvl.L5 { color: #666; } td.lvl.L6, td.lvl.L7, td.lvl.L8, td.lvl.L9, td.lvl.L1
 .benchmark-card .metric-line { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; }
 .benchmark-card .metric-line .lbl { color: #666; }
 .benchmark-card .metric-line .val { font-weight: 600; }
-.benchmark-card.brand-0 { border-top: 4px solid #111; }
-.benchmark-card.brand-1 { border-top: 4px solid #2d6a4f; }
-.benchmark-card.brand-2 { border-top: 4px solid #f57c00; }
+.benchmark-card.brand-0 { border-top: 4px solid #003087; }
+.benchmark-card.brand-1 { border-top: 4px solid #C8102E; }
+.benchmark-card.brand-2 { border-top: 4px solid #0066B3; }
 .comp-section { background: #fff; border-radius: 12px; padding: 22px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
 .comp-section h3 { margin-bottom: 15px; }
 .gap-table { width: 100%; border-collapse: collapse; }
@@ -260,14 +286,31 @@ td.lvl.L5 { color: #666; } td.lvl.L6, td.lvl.L7, td.lvl.L8, td.lvl.L9, td.lvl.L1
 .neg-brief-copy { background: #4a148c; color: #fff; }
 .neg-brief-close { background: #e5e5e5; color: #333; }
 .neg-brief-text { margin: 0; padding: 22px; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 12px; line-height: 1.65; color: #222; white-space: pre; overflow-x: auto; background: #fff; }
-.card-image-wrap { width: 100%; height: 170px; background: #f8fafc; border-radius: 8px; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; border: 1px solid #f0f0f0; }
-.card-image-wrap img { max-width: 100%; max-height: 100%; object-fit: contain; padding: 8px; }
-.card-image-wrap .placeholder { font-size: 56px; color: #cbd5e1; user-select: none; }
-.card-image-wrap .upload-btn { position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.95); border: 1px solid #ddd; border-radius: 6px; padding: 4px 10px; font-size: 11px; cursor: pointer; opacity: 0; transition: opacity 0.15s; font-family: inherit; color: #333; }
-.card-image-wrap:hover .upload-btn { opacity: 1; }
-.card-image-wrap .upload-btn:hover { background: #fff; border-color: #111; }
+.forecast-header { background: #fff; border-radius: 12px; padding: 22px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+.forecast-header h3 { margin-bottom: 10px; }
+.forecast-header p { font-size: 13px; color: #555; line-height: 1.6; }
+.forecast-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 25px; margin-bottom: 25px; }
+.forecast-card { background: #fff; border-radius: 12px; padding: 22px; box-shadow: 0 2px 8px rgba(0,0,0,.06); margin-bottom: 20px; }
+.forecast-card h4 { font-size: 15px; margin-bottom: 6px; }
+.forecast-card .cat { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 15px; }
+.forecast-chart-wrap { height: 260px; margin-bottom: 15px; position: relative; }
+.forecast-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
+.forecast-summary .stat { background: #f8fafc; border-radius: 8px; padding: 10px; text-align: center; }
+.forecast-summary .stat .lbl { font-size: 10px; text-transform: uppercase; color: #888; letter-spacing: .5px; }
+.forecast-summary .stat .val { font-size: 16px; font-weight: 700; margin-top: 3px; }
+.delta-up { color: #dc2626; } .delta-down { color: #059669; }
+.driver-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+.driver-table th { font-size: 10px; text-transform: uppercase; color: #666; background: #f9fafb; padding: 6px 8px; text-align: left; }
+.driver-table td { font-size: 12px; padding: 7px 8px; border-bottom: 1px solid #eee; }
+.driver-table .src { font-size: 10px; color: #999; font-style: italic; }
+.src-link { color: #2e7d32; text-decoration: none; font-size: 10px; margin-left: 4px; }
+.driver-table .q-change { text-align: right; color: #555; font-family: monospace; }
+.scenario-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 18px; margin-top: 20px; }
+.scenario-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 12px; align-items: center; padding: 6px 0; border-bottom: 1px solid #eee; }
+.scenario-row:last-child { border-bottom: none; }
+.scenario-row input { padding: 6px 8px; border: 1px solid #d0d0d0; border-radius: 6px; font-size: 13px; width: 100%; }
+.scenario-row .note { font-size: 11px; color: #999; }
 :focus-visible { outline: 2px solid #4a148c; outline-offset: 2px; border-radius: 4px; }
-.card:focus-visible { border-color: #4a148c; }
 .tab:focus-visible, .chart-btn:focus-visible, .loc-tab:focus-visible { outline: 2px solid #fff; outline-offset: -2px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -313,6 +356,7 @@ td.lvl.L5 { color: #666; } td.lvl.L6, td.lvl.L7, td.lvl.L8, td.lvl.L9, td.lvl.L1
     <button class="tab" onclick="showTab('assumptions', this)">⚙️ Assumptions & Sources</button>
     <button class="tab" onclick="showTab('scenarios', this)">📂 Scenarios</button>
     <button class="tab" onclick="showTab('negotiation', this)">💰 Negotiation</button>
+    <button class="tab" onclick="showTab('forecast', this)">📈 Budgeting & Forecasting</button>
     <button class="tab" onclick="showTab('competitive', this)">🏆 Competitive Intelligence</button>
     <button class="tab" onclick="showTab('e2e', this)">🌐 End-to-End</button>
   </div>
@@ -322,9 +366,9 @@ td.lvl.L5 { color: #666; } td.lvl.L6, td.lvl.L7, td.lvl.L8, td.lvl.L9, td.lvl.L1
   <div class="tab-panel active" id="tab-dashboard">
     <div style="background: #e8f5e9; border-left: 4px solid #2d6a4f; padding: 12px 18px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; color: #333; display: flex; align-items: center; gap: 10px;">
       <span style="font-size: 18px;">💡</span>
-      <span><strong>Click any device card</strong> to see its full cost breakdown — including the interactive cost driver tree, MOQ sensitivity analysis, and detailed cost table.</span>
+      <span><strong>Pick a device from any company below</strong> to see its live cost summary, then click <strong>Deep dive</strong> to open the full cost tree, MOQ sensitivity, and detailed cost table.</span>
     </div>
-    <div class="grid" id="cards"></div>
+    <div id="companyRows"></div>
     <div class="drill" id="drill">
       <h3 id="drillTitle"></h3>
       <div id="locBanner" style="background:#e8f5e9; padding:10px 15px; border-radius:8px; margin-bottom:8px; font-size:13.5px;"></div>
@@ -430,32 +474,45 @@ td.lvl.L5 { color: #666; } td.lvl.L6, td.lvl.L7, td.lvl.L8, td.lvl.L9, td.lvl.L1
     </div>
   </div>
 
+  <div class="tab-panel" id="tab-forecast">
+    <div class="forecast-header">
+      <h3>📈 18-Month Budgeting & Forecasting</h3>
+      <p id="forecastSubtitle">Projected cost evolution for each device.</p>
+    </div>
+    <div class="forecast-grid" id="forecastGrid"></div>
+    <div class="forecast-card">
+      <h4>🔧 Scenario Adjustment</h4>
+      <div class="cat">Change any quarterly driver rate and re-run</div>
+      <div class="scenario-box" id="scenarioBox"></div>
+      <button class="btn-primary" style="margin-top:15px;" onclick="runForecast()">↻ Re-run Forecast</button>
+      <button class="btn-secondary" style="margin-top:15px;" onclick="resetForecast()">↺ Reset to Research Defaults</button>
+    </div>
+    <div class="forecast-card">
+      <h4>📚 Forecast Drivers & Sources</h4>
+      <table class="driver-table" id="driverTable"></table>
+    </div>
+  </div>
+
   <div class="tab-panel" id="tab-competitive">
     <div class="comp-header">
       <h3>🏆 Competitive Intelligence</h3>
       <p>Compare any two HTP devices across BAT, PMI, and JTI on cost structure, retail efficiency, carbon footprint, and margin capture. Pick a company, then a specific device on each side.</p>
     </div>
-
     <div class="ci-selector" id="compareSelector"></div>
     <div class="ci-stats" id="compareStats"></div>
-
     <div class="benchmark-grid" id="benchmarkGrid"></div>
-
     <div class="comp-section">
       <h3>⚖️ Head-to-head</h3>
       <div id="compareTable"></div>
     </div>
-
     <div class="comp-section">
       <h3>📊 Cost structure comparison</h3>
       <div style="height: 340px; position: relative;"><canvas id="compareChart"></canvas></div>
     </div>
-
     <div class="comp-section">
       <h3>💡 Insights</h3>
       <div class="ci-insights" id="compareInsights"></div>
     </div>
-
     <div class="comp-section">
       <h3>🎯 Where to focus</h3>
       <div id="comparePriorities"></div>
@@ -471,7 +528,6 @@ td.lvl.L5 { color: #666; } td.lvl.L6, td.lvl.L7, td.lvl.L8, td.lvl.L9, td.lvl.L1
     <div class="source-legend" id="sourceLegend"></div>
     <h3 style="margin-bottom:12px;">Destination Markets</h3>
     <div class="dest-legend" id="destLegend"></div>
-
     <div class="tariff-section" id="tariffSection">
       <h3>Tariff Simulator <span id="tariffDeltaBadge" class="tariff-badge" style="display:none;"></span></h3>
       <p class="tariff-sub">Devices currently ship duty-free in most developed markets. Drag any slider to simulate a tariff regime change — every downstream chart updates immediately.</p>
@@ -480,7 +536,6 @@ td.lvl.L5 { color: #666; } td.lvl.L6, td.lvl.L7, td.lvl.L8, td.lvl.L9, td.lvl.L1
         <button class="btn-secondary" onclick="resetTariffs()">↺ Reset tariffs to defaults</button>
       </div>
     </div>
-
     <div class="carbon-section" id="carbonSection">
       <h3>🌱 Carbon footprint &amp; EU carbon cost</h3>
       <p class="carbon-sub">CO₂e per device is computed from the BOM (material CO₂e factors) plus a manufacturing energy allowance. EU destinations get a carbon cost line, sized by CBAM phase-in for the selected year. Devices are <strong>not currently in CBAM scope</strong>; this models an indicative scope-3 exposure.</p>
@@ -497,7 +552,6 @@ td.lvl.L5 { color: #666; } td.lvl.L6, td.lvl.L7, td.lvl.L8, td.lvl.L9, td.lvl.L1
       <div class="carbon-chart-wrap"><canvas id="carbonChart"></canvas></div>
       <div class="carbon-note" id="carbonNote"></div>
     </div>
-
     <h3 style="margin-bottom:12px;">Landed Cost Matrix</h3>
     <div class="matrix-wrap">
       <table class="matrix-table" id="matrixTable"></table>
@@ -531,6 +585,7 @@ const QUOTES_KEY = 'htp_quotes_v1';
 const FEED_CACHE_KEY = 'htp_feed_cache_v1';
 const FEED_CONFIG_KEY = 'htp_feed_config_v1';
 const FEED_TTL_MS = 6 * 60 * 60 * 1000;
+const FC_STORAGE = 'htp_cost_forecast_overrides_v1';
 
 let data = null, originalAssumptions = null, originalTradeRules = null;
 let selected = null, chart = null, moqChart = null;
@@ -553,6 +608,15 @@ let currentCompareA = null;
 let currentCompareB = null;
 let compareCompanyA = null;
 let compareCompanyB = null;
+let forecastOverrides = {};
+let _forecastRafId = null;
+let companySelections = {};
+
+const BRAND_NAMES = {
+  BAT: 'British American Tobacco',
+  PMI: 'Philip Morris International',
+  JTI: 'Japan Tobacco International'
+};
 
 const fmt = n => '$' + (isFinite(n) && n != null ? Number(n).toFixed(2) : '0.00');
 const pct = n => (isFinite(n) && n != null ? Number(n).toFixed(1) : '0.0') + '%';
@@ -723,6 +787,7 @@ function onCbamYearChange() {
   safeRender('matrix', () => renderMatrix(data.endToEnd));
   safeRender('waterfall', renderWaterfall);
   safeRender('retailChart', () => renderRetailByMarket(data.endToEnd));
+  safeRender('companyRows', renderCompanyRows);
   safeRender('compareStats', renderCompareStats);
   safeRender('compareTable', renderCompareTable);
   safeRender('compareInsights', renderCompareInsights);
@@ -1135,7 +1200,7 @@ function renderTariffDeltaBadge() {
 }
 
 /* ============================================================
-   COMPETITIVE INTELLIGENCE — any-to-any compare with company dropdowns
+   COMPETITIVE INTELLIGENCE
    ============================================================ */
 
 function getComparePair() {
@@ -1145,7 +1210,6 @@ function getComparePair() {
          || data.products.find(p => p.id !== a.id);
   return { a, b };
 }
-
 function onCompareChange(which, id) {
   if (which === 'A') currentCompareA = id;
   else currentCompareB = id;
@@ -1157,7 +1221,6 @@ function onCompareChange(which, id) {
   safeRender('comparePriorities', renderComparePriorities);
   syncUrl();
 }
-
 function onCompanyChange(side, company) {
   if (side === 'A') {
     compareCompanyA = company;
@@ -1176,7 +1239,6 @@ function onCompanyChange(side, company) {
   safeRender('comparePriorities', renderComparePriorities);
   syncUrl();
 }
-
 function renderCompetitiveTab() {
   if (!data.competitors) return;
   safeRender('compareSelector', renderCompareSelector);
@@ -1187,7 +1249,6 @@ function renderCompetitiveTab() {
   safeRender('compareInsights', renderCompareInsights);
   safeRender('comparePriorities', renderComparePriorities);
 }
-
 function renderCompareSelector() {
   const wrap = document.getElementById('compareSelector');
   if (!wrap) return;
@@ -1195,19 +1256,15 @@ function renderCompareSelector() {
     wrap.innerHTML = '<p style="color:#888; font-size:13px;">Add at least two devices to enable comparison.</p>';
     return;
   }
-
   const companies = [...new Set(data.products.map(p => p.brand))].sort();
   if (!compareCompanyA || !companies.includes(compareCompanyA)) compareCompanyA = companies[0];
   if (!compareCompanyB || !companies.includes(compareCompanyB)) compareCompanyB = companies.find(c => c !== compareCompanyA) || companies[0];
-
   const productsA = data.products.filter(p => p.brand === compareCompanyA);
   const productsB = data.products.filter(p => p.brand === compareCompanyB);
-
   let a = productsA.find(p => p.id === currentCompareA);
   if (!a) { a = productsA[0]; currentCompareA = a ? a.id : null; }
   let b = productsB.find(p => p.id === currentCompareB);
   if (!b) { b = productsB[0]; currentCompareB = b ? b.id : null; }
-
   const companyOptsA = companies.map(c =>
     '<option value="' + c + '"' + (c === compareCompanyA ? ' selected' : '') + '>' + escapeHtml(c) + '</option>'
   ).join('');
@@ -1220,7 +1277,6 @@ function renderCompareSelector() {
   const modelOptsB = productsB.map(p =>
     '<option value="' + p.id + '"' + (p.id === (b && b.id) ? ' selected' : '') + '>' + escapeHtml(p.name) + '</option>'
   ).join('');
-
   wrap.innerHTML =
     '<div class="ci-side">'
     +   '<label class="ci-side-label">Company A</label>'
@@ -1236,7 +1292,6 @@ function renderCompareSelector() {
     +   '<select class="ci-model" onchange="onCompareChange(\'B\', this.value)">' + modelOptsB + '</select>'
     + '</div>';
 }
-
 function renderCompareStats() {
   const wrap = document.getElementById('compareStats');
   if (!wrap) return;
@@ -1253,7 +1308,6 @@ function renderCompareStats() {
   const pctB = retailB ? (cb.fob / retailB) * 100 : 0;
   const gmA = retailA ? ((retailA - ca.fob) / retailA) * 100 : 0;
   const gmB = retailB ? ((retailB - cb.fob) / retailB) * 100 : 0;
-
   function card(label, valA, valB, formatter, lowerIsBetter) {
     const nA = Number(valA) || 0, nB = Number(valB) || 0;
     let clsA = '', clsB = '';
@@ -1267,14 +1321,12 @@ function renderCompareStats() {
       + '<div class="ci-row ' + clsB + '"><span class="ci-name" title="' + escapeHtml(b.name) + '">' + escapeHtml(b.name) + '</span><span class="ci-val">' + formatter(valB) + '</span></div>'
       + '</div>';
   }
-
   wrap.innerHTML =
     card('FOB per unit', ca.fob, cb.fob, v => fmt(v), true)
     + card('FOB as % of retail', pctA, pctB, v => Number(v).toFixed(1) + '%', true)
     + card('Gross margin %', gmA, gmB, v => Number(v).toFixed(1) + '%', false)
     + card('CO₂e per unit', carbA.totalCO2e, carbB.totalCO2e, v => Number(v).toFixed(3) + ' kg', true);
 }
-
 function renderCompareTable() {
   const wrap = document.getElementById('compareTable');
   if (!wrap) return;
@@ -1340,7 +1392,6 @@ function renderCompareTable() {
   h += '</tbody></table>';
   wrap.innerHTML = h;
 }
-
 function renderCompareChart() {
   const ctx = document.getElementById('compareChart');
   if (!ctx) return;
@@ -1362,7 +1413,6 @@ function renderCompareChart() {
       scales: { y: { title: { display: true, text: '$ per unit' }, beginAtZero: true } } }
   });
 }
-
 function renderCompareInsights() {
   const wrap = document.getElementById('compareInsights');
   if (!wrap) return;
@@ -1370,13 +1420,11 @@ function renderCompareInsights() {
   if (!a || !b || a.id === b.id) { wrap.innerHTML = ''; return; }
   const ca = calc(a), cb = calc(b);
   const carbA = calcCarbon(a), carbB = calcCarbon(b);
-
   const fobDelta = cb.fob - ca.fob;
   const cheaper = fobDelta > 0 ? a : b;
   const expensive = fobDelta > 0 ? b : a;
   const fobDeltaAbs = Math.abs(fobDelta);
   const fobDeltaPct = Math.min(ca.fob, cb.fob) ? (fobDeltaAbs / Math.min(ca.fob, cb.fob)) * 100 : 0;
-
   const categories = [
     { name: 'materials', a: ca.mat, b: cb.mat },
     { name: 'labour', a: ca.lab, b: cb.lab },
@@ -1387,19 +1435,16 @@ function renderCompareInsights() {
   for (const c of categories) if (Math.abs(c.a - c.b) > Math.abs(biggest.a - biggest.b)) biggest = c;
   const biggestDelta = biggest.a - biggest.b;
   const biggestWinner = biggestDelta > 0 ? b : a;
-
   const retailPctA = a.retailPrice ? (ca.fob / a.retailPrice) * 100 : 0;
   const retailPctB = b.retailPrice ? (cb.fob / b.retailPrice) * 100 : 0;
   const retailEffWinner = retailPctA < retailPctB ? a : b;
   const retailEffLoser = retailPctA < retailPctB ? b : a;
   const retailEffDiffPp = Math.abs(retailPctA - retailPctB);
-
   const carbDelta = carbB.totalCO2e - carbA.totalCO2e;
   const carbWinner = carbDelta > 0 ? a : b;
   const carbLoser = carbDelta > 0 ? b : a;
   const carbDeltaAbs = Math.abs(carbDelta);
   const carbPct = Math.min(carbA.totalCO2e, carbB.totalCO2e) ? (carbDeltaAbs / Math.min(carbA.totalCO2e, carbB.totalCO2e)) * 100 : 0;
-
   const insights = [];
   insights.push({
     icon: '💰', title: 'FOB position',
@@ -1429,7 +1474,6 @@ function renderCompareInsights() {
     + '<div class="ci-insight-text">' + i.text + '</div></div>'
   ).join('');
 }
-
 function renderComparePriorities() {
   const wrap = document.getElementById('comparePriorities');
   if (!wrap) return;
@@ -1437,7 +1481,6 @@ function renderComparePriorities() {
   if (!a || !b || a.id === b.id) { wrap.innerHTML = ''; return; }
   const ca = calc(a), cb = calc(b);
   const carbA = calcCarbon(a), carbB = calcCarbon(b);
-
   const categories = [
     { name: 'Materials', a: ca.mat, b: cb.mat, action: 'Review material specification and component sourcing on the higher-cost device — check whether the gap is justified by performance or user-visible features.' },
     { name: 'Labour (CMT)', a: ca.lab, b: cb.lab, action: 'Compare assembly minutes per operation. Simplified construction or partial automation could close most of the gap.' },
@@ -1473,7 +1516,6 @@ function renderComparePriorities() {
   }
   const impactOrder = { High: 0, Medium: 1, Low: 2 };
   priorities.sort((x, y) => (impactOrder[x.impact] || 3) - (impactOrder[y.impact] || 3));
-
   if (priorities.length === 0) {
     wrap.innerHTML = '<p style="color:#888; font-size:13px;">No material differences detected between the two devices.</p>';
     return;
@@ -1487,7 +1529,6 @@ function renderComparePriorities() {
     + '</div>'
   ).join('');
 }
-
 function renderBenchmarkCards(benchmarks) {
   const grid = document.getElementById('benchmarkGrid'); if (!grid) return;
   grid.innerHTML = '';
@@ -1503,6 +1544,149 @@ function renderBenchmarkCards(benchmarks) {
     card.innerHTML = html;
     grid.appendChild(card);
   });
+}
+
+/* ============================================================
+   FORECAST
+   ============================================================ */
+
+function getEffectiveForecastRate(driverId, qIdx) {
+  if (!data.forecasts) return 0;
+  const driver = data.forecasts.drivers.find(d => d.id === driverId);
+  if (!driver) return 0;
+  if (forecastOverrides[driverId] && forecastOverrides[driverId][qIdx] !== undefined) return forecastOverrides[driverId][qIdx];
+  return driver.quarterlyChange[qIdx];
+}
+function buildProjection(product) {
+  if (!data.forecasts) return null;
+  const baseLoc = currentLocation;
+  const quarterLabels = data.forecasts.quarterLabels;
+  const projections = [];
+  const baseCost = calc(product, baseLoc, data.assumptions.materialPrices).fob;
+  for (let q = 0; q < 6; q++) {
+    const matCopy = {};
+    Object.entries(data.assumptions.materialPrices).forEach(([k, v]) => {
+      const price = typeof v === 'object' ? v.price : v;
+      let multiplier = 1;
+      data.forecasts.drivers.forEach(d => {
+        if (d.affects && d.affects.type === 'material' && d.affects.key === k) {
+          for (let qq = 0; qq <= q; qq++) multiplier *= (1 + getEffectiveForecastRate(d.id, qq) / 100);
+        }
+      });
+      matCopy[k] = { price: price * multiplier, source: typeof v === 'object' ? v.source : '' };
+    });
+    const locCopy = { ...baseLoc };
+    let labourMultiplier = 1;
+    data.forecasts.drivers.forEach(d => {
+      if (d.affects && d.affects.type === 'labour' && d.affects.key === baseLoc.id) {
+        for (let qq = 0; qq <= q; qq++) labourMultiplier *= (1 + getEffectiveForecastRate(d.id, qq) / 100);
+      }
+    });
+    locCopy.laborRatePerHr = baseLoc.laborRatePerHr * labourMultiplier;
+    const c = calc(product, locCopy, matCopy);
+    projections.push({ label: quarterLabels[q], fob: c.fob, materials: c.mat, labour: c.lab, overheads: c.ovh, margin: c.margin });
+  }
+  const finalFob = projections[projections.length - 1].fob;
+  const delta = baseCost ? ((finalFob - baseCost) / baseCost) * 100 : 0;
+  return { baseCost, projections, delta, finalFob };
+}
+function renderForecastTab() {
+  if (!data.forecasts) return;
+  const sub = document.getElementById('forecastSubtitle');
+  if (sub) sub.textContent = 'Projected cost evolution from ' + data.forecasts.quarterLabels[0] + ' to ' + data.forecasts.quarterLabels[data.forecasts.quarterLabels.length - 1] + '.';
+  if (_forecastRafId) { cancelAnimationFrame(_forecastRafId); _forecastRafId = null; }
+  if (window._fcCharts && window._fcCharts.length) window._fcCharts.forEach(c => { try { c.destroy(); } catch(e){} });
+  window._fcCharts = [];
+  const grid = document.getElementById('forecastGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  data.products.forEach(p => {
+    const proj = buildProjection(p); if (!proj) return;
+    const card = document.createElement('div');
+    card.className = 'forecast-card';
+    const deltaPct = proj.delta;
+    const deltaClass = deltaPct > 0 ? 'delta-up' : 'delta-down';
+    const deltaSign = deltaPct > 0 ? '+' : '';
+    card.innerHTML = '<h4>' + p.name + '</h4>'
+      + '<div class="cat">' + (p.brand || '') + ' · ' + (p.category || '') + ' · ' + currentLocation.name + '</div>'
+      + '<div class="forecast-summary">'
+      + '<div class="stat"><div class="lbl">Base FOB</div><div class="val">' + fmt(proj.baseCost) + '</div></div>'
+      + '<div class="stat"><div class="lbl">Projected Q1 2028</div><div class="val">' + fmt(proj.finalFob) + '</div></div>'
+      + '<div class="stat"><div class="lbl">18-Month Δ</div><div class="val ' + deltaClass + '">' + deltaSign + deltaPct.toFixed(1) + '%</div></div>'
+      + '</div>'
+      + '<div class="forecast-chart-wrap"><canvas id="fc-' + p.id + '"></canvas></div>';
+    grid.appendChild(card);
+  });
+  _forecastRafId = requestAnimationFrame(() => {
+    _forecastRafId = null;
+    data.products.forEach(p => {
+      const proj = buildProjection(p); if (!proj) return;
+      const canvas = document.getElementById('fc-' + p.id); if (!canvas) return;
+      const existing = (typeof Chart.getChart === 'function') ? Chart.getChart(canvas) : null;
+      if (existing) { try { existing.destroy(); } catch(e){} }
+      try {
+        const c = new Chart(canvas, {
+          type: 'line',
+          data: { labels: proj.projections.map(x => x.label), datasets: [
+            { label: 'Total FOB', data: proj.projections.map(x => x.fob), borderColor: '#111', backgroundColor: 'rgba(17,17,17,0.06)', borderWidth: 2.5, tension: 0.3, fill: true, pointRadius: 4 },
+            { label: 'Materials', data: proj.projections.map(x => x.materials), borderColor: '#2d6a4f', borderWidth: 1.5, tension: 0.3, pointRadius: 2 },
+            { label: 'Labour', data: proj.projections.map(x => x.labour), borderColor: '#f57c00', borderWidth: 1.5, tension: 0.3, pointRadius: 2 },
+            { label: 'Overheads', data: proj.projections.map(x => x.overheads), borderColor: '#999', borderWidth: 1.5, tension: 0.3, pointRadius: 2 }
+          ]},
+          options: { responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } },
+            scales: { y: { title: { display: true, text: '$ per unit' } } } }
+        });
+        window._fcCharts.push(c);
+      } catch (err) { console.error('Forecast chart error:', err); }
+    });
+  });
+  renderScenarioBox();
+  renderDriverTable();
+}
+function renderScenarioBox() {
+  const box = document.getElementById('scenarioBox'); if (!box || !data.forecasts) return;
+  box.innerHTML = '';
+  data.forecasts.drivers.forEach(d => {
+    const row = document.createElement('div');
+    row.className = 'scenario-row';
+    const currentRate = getEffectiveForecastRate(d.id, 0);
+    row.innerHTML = '<div>' + escapeHtml(d.name) + '<div class="note">' + escapeHtml(d.source || '') + '</div></div>'
+      + '<input type="number" step="0.1" value="' + currentRate + '" onchange="updateForecastOverride(\'' + d.id + '\', this.value)">'
+      + '<div class="note">% change per quarter</div>';
+    box.appendChild(row);
+  });
+}
+function updateForecastOverride(driverId, val) {
+  const v = parseFloat(val);
+  if (!isFinite(v)) return;
+  forecastOverrides[driverId] = [v, v, v, v, v, v];
+  try { localStorage.setItem(FC_STORAGE, JSON.stringify(forecastOverrides)); } catch(e) {}
+  safeRender('forecast', renderForecastTab);
+}
+function runForecast() { safeRender('forecast', renderForecastTab); }
+function resetForecast() {
+  if (!confirm('Reset all forecast rates to research defaults?')) return;
+  forecastOverrides = {};
+  try { localStorage.removeItem(FC_STORAGE); } catch(e) {}
+  safeRender('forecast', renderForecastTab);
+}
+function renderDriverTable() {
+  const t = document.getElementById('driverTable'); if (!t || !data.forecasts) return;
+  let h = '<thead><tr><th style="width:18%;">Driver</th><th style="width:14%;">Affects</th><th style="width:18%;">Source</th><th>Forecast Basis</th>'
+    + '<th class="q-change">Q1</th><th class="q-change">Q2</th><th class="q-change">Q3</th><th class="q-change">Q4</th><th class="q-change">Q5</th><th class="q-change">Q6</th></tr></thead><tbody>';
+  data.forecasts.drivers.forEach(d => {
+    const qCells = [0,1,2,3,4,5].map(q => {
+      const v = getEffectiveForecastRate(d.id, q);
+      const cls = v > 0 ? 'delta-up' : (v < 0 ? 'delta-down' : '');
+      return '<td class="q-change ' + cls + '">' + (v > 0 ? '+' : '') + v.toFixed(1) + '%</td>';
+    }).join('');
+    h += '<tr><td><strong>' + escapeHtml(d.name) + '</strong></td>'
+      + '<td><span style="font-size:10px;color:#888;">' + (d.affects ? d.affects.type + ':' + d.affects.key : '') + '</span></td>'
+      + '<td>' + escapeHtml(d.source || '') + (d.url ? '<a href="' + d.url + '" target="_blank" class="src-link">↗</a>' : '') + '</td>'
+      + '<td class="src">' + escapeHtml(d.citation || '') + '</td>' + qCells + '</tr>';
+  });
+  t.innerHTML = h + '</tbody>';
 }
 
 /* ============================================================
@@ -1580,10 +1764,11 @@ function applyUrlState(u) {
     changed = true;
   }
   if (changed) {
-    safeRender('cards', renderCards);
+    safeRender('companyRows', renderCompanyRows);
     if (selected) safeRender('drilldown', renderDrilldown);
     safeRender('assumptions', renderAssumptionEditors);
     safeRender('negotiation', renderNegotiationTab);
+    safeRender('forecast', renderForecastTab);
     safeRender('scenarios', renderScenariosTab);
     safeRender('competitive', renderCompetitiveTab);
   }
@@ -1634,7 +1819,8 @@ function snapshotState(name) {
     productId: selected ? selected.id : null,
     compareA: currentCompareA,
     compareB: currentCompareB,
-    assumptions: JSON.parse(JSON.stringify(data.assumptions))
+    assumptions: JSON.parse(JSON.stringify(data.assumptions)),
+    forecastOverrides: JSON.parse(JSON.stringify(forecastOverrides))
   };
 }
 function computeScenarioFobs(snap) {
@@ -1668,6 +1854,7 @@ function applyScenarioSnapshot(snap) {
   if (snap.moq != null) currentMOQ = snap.moq;
   if (snap.compareA) currentCompareA = snap.compareA;
   if (snap.compareB) currentCompareB = snap.compareB;
+  forecastOverrides = JSON.parse(JSON.stringify(snap.forecastOverrides || {}));
   document.getElementById('locationSelect').value = currentLocation.id;
   document.getElementById('tierSelect').value = currentTier;
   return true;
@@ -1690,17 +1877,17 @@ function deleteScenario(id) {
   renderScenariosTab();
 }
 function refreshEverything() {
-  safeRender('cards', renderCards);
+  safeRender('companyRows', renderCompanyRows);
   if (selected) safeRender('drilldown', renderDrilldown);
   safeRender('assumptions', renderAssumptionEditors);
   safeRender('negotiation', renderNegotiationTab);
+  safeRender('forecast', renderForecastTab);
   safeRender('scenarios', renderScenariosTab);
   safeRender('competitive', renderCompetitiveTab);
   safeRender('e2e', renderE2ETab);
   if (currentBriefProduct) safeRender('brief', () => renderNegotiationBrief(currentBriefProduct));
   syncUrl();
 }
-
 function diffObject(base, target) {
   const out = {};
   const keys = new Set([...Object.keys(base || {}), ...Object.keys(target || {})]);
@@ -1735,6 +1922,7 @@ function compactDiff(snap) {
   if (snap.compareB) diff.cb = snap.compareB;
   const aDiff = diffObject(defaults.assumptions, snap.assumptions);
   if (Object.keys(aDiff).length) diff.a = aDiff;
+  if (Object.keys(snap.forecastOverrides || {}).length) diff.f = snap.forecastOverrides;
   return diff;
 }
 function reconstructFromDiff(diff) {
@@ -1748,7 +1936,8 @@ function reconstructFromDiff(diff) {
     moq: diff.m != null ? diff.m : null,
     compareA: diff.ca || null,
     compareB: diff.cb || null,
-    assumptions: applyDiffToObject(originalAssumptions, diff.a || {})
+    assumptions: applyDiffToObject(originalAssumptions, diff.a || {}),
+    forecastOverrides: diff.f || {}
   };
 }
 function b64UrlEncode(str) { return btoa(unescape(encodeURIComponent(str))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
@@ -1758,7 +1947,6 @@ function decodeScenarioFromUrl(encoded) {
   try { return reconstructFromDiff(JSON.parse(b64UrlDecode(encoded))); }
   catch(e) { console.warn('Could not decode scenario URL', e); return null; }
 }
-
 function promptSaveScenario() {
   const defaultName = 'Scenario ' + new Date().toISOString().slice(0, 16).replace('T', ' ');
   const name = prompt('Name this scenario:', defaultName);
@@ -1779,10 +1967,13 @@ function promptResetScenarioToDefaults() {
   currentCompareB = null;
   compareCompanyA = null;
   compareCompanyB = null;
+  forecastOverrides = {};
+  companySelections = {};
   document.getElementById('drill').classList.remove('on');
   document.getElementById('locationSelect').value = currentLocation.id;
   document.getElementById('tierSelect').value = currentTier;
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(FC_STORAGE);
   if (originalTradeRules && data.endToEnd) data.endToEnd.tradeRules = JSON.parse(JSON.stringify(originalTradeRules));
   refreshEverything();
 }
@@ -1926,6 +2117,8 @@ async function load() {
 
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) { try { data.assumptions = JSON.parse(saved); } catch(e){} }
+  const savedFc = localStorage.getItem(FC_STORAGE);
+  if (savedFc) { try { forecastOverrides = JSON.parse(savedFc); } catch(e){} }
 
   loadQuotes(); loadFeedConfig(); loadFeedCache();
 
@@ -1942,6 +2135,7 @@ async function load() {
   editingLocId = null;
   colFilters = {};
   expandedNodes = {};
+  companySelections = {};
   document.getElementById('drill').classList.remove('on');
 
   const sel = document.getElementById('locationSelect');
@@ -1955,11 +2149,12 @@ async function load() {
 
   document.getElementById('updated').textContent = 'Last updated: ' + (data.last_updated || '—') + ' · v' + (data.version || '');
 
-  safeRender('cards', renderCards);
+  safeRender('companyRows', renderCompanyRows);
   safeRender('assumptions', renderAssumptionEditors);
   safeRender('feeds', renderFeedsEditor);
   safeRender('scenarios', renderScenariosTab);
   safeRender('negotiation', renderNegotiationTab);
+  safeRender('forecast', renderForecastTab);
   safeRender('competitive', renderCompetitiveTab);
   safeRender('e2e', renderE2ETab);
 
@@ -1976,6 +2171,7 @@ function showTab(name, btn) {
   if (name === 'assumptions') { safeRender('assumptions', renderAssumptionEditors); safeRender('feeds', renderFeedsEditor); }
   if (name === 'scenarios') safeRender('scenarios', renderScenariosTab);
   if (name === 'negotiation') safeRender('negotiation', renderNegotiationTab);
+  if (name === 'forecast') safeRender('forecast', renderForecastTab);
   if (name === 'competitive') safeRender('competitive', renderCompetitiveTab);
   if (name === 'e2e') safeRender('e2e', renderE2ETab);
   syncUrl();
@@ -2046,65 +2242,89 @@ function calc(p, locOverride, matOverride) {
 }
 
 /* ============================================================
-   DASHBOARD
+   DASHBOARD — Company Rows
    ============================================================ */
 
-function renderCards() {
-  const g = document.getElementById('cards'); if (!g) return;
-  g.innerHTML = '';
-  data.products.forEach(p => {
-    const c = calc(p);
-    const d = document.createElement('div');
-    d.className = 'card';
-    d.onclick = () => selectProduct(p.id);
+function renderCompanyRows() {
+  const wrap = document.getElementById('companyRows'); if (!wrap) return;
+  wrap.innerHTML = '';
+  const companies = [...new Set(data.products.map(p => p.brand))];
+  companies.forEach(brand => {
+    const devices = data.products.filter(p => p.brand === brand);
+    if (!devices.length) return;
+    const selectedId = companySelections[brand];
+    const product = devices.find(d => d.id === selectedId) || devices[0];
+    companySelections[brand] = product.id;
+
+    const c = calc(product);
     const tier = data.assumptions.supplierTiers[currentTier];
-    const storedImage = localStorage.getItem('htp_product_image_' + p.id);
-    const imageUrl = storedImage || p.imageUrl || '';
-    const imageBlock = imageUrl
-      ? '<img src="' + imageUrl + '" alt="' + p.name + '" loading="lazy" decoding="async" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';"><div class="placeholder" style="display:none;">📱</div>'
-      : '<div class="placeholder">📱</div>';
-    let moqLine = '';
-    if (p.moq) {
-      const moqAdj = p.moq.current * tier.moqMultiplier;
-      const fixedPerUnit = p.moq.fixedCostPool / moqAdj;
-      moqLine = '<div class="row"><span class="lbl">Fixed @ MOQ ' + Math.round(moqAdj).toLocaleString() + '</span><span class="val">' + fmt(fixedPerUnit) + '</span></div>'
-              + '<div class="row big"><span>Total Unit Cost</span><span>' + fmt(c.fob + fixedPerUnit) + '</span></div>';
-    }
-    d.innerHTML = '<div class="card-image-wrap" title="Click to change image">'
-      + imageBlock
-      + '<button class="upload-btn" onclick="event.stopPropagation(); document.getElementById(\'img-input-' + p.id + '\').click();">📷 Change</button>'
-      + '<input type="file" id="img-input-' + p.id + '" accept="image/*" style="display:none" onchange="uploadProductImage(\'' + p.id + '\', this)">'
+    const moqEffective = product.moq ? Math.round(product.moq.current * tier.moqMultiplier) : 0;
+    const fixedPerUnit = product.moq ? (product.moq.fixedCostPool / (moqEffective || 1)) : 0;
+    const totalUnit = c.fob + fixedPerUnit;
+    const retail = product.retailPrice || 0;
+    const fobPct = retail ? (c.fob / retail) * 100 : 0;
+    const carbon = calcCarbon(product);
+
+    const row = document.createElement('div');
+    row.className = 'company-row';
+    row.dataset.brand = brand;
+
+    const opts = devices.map(d => '<option value="' + d.id + '"' + (d.id === product.id ? ' selected' : '') + '>' + escapeHtml(d.name) + '</option>').join('');
+
+    row.innerHTML =
+      '<div class="company-header">'
+      + '<div class="company-name"><span class="company-code">' + escapeHtml(brand) + '</span>' + escapeHtml(BRAND_NAMES[brand] || brand) + '</div>'
+      + '<div class="company-selector">'
+      + '<label>Select device</label>'
+      + '<select onchange="onCompanyDeviceChange(\'' + brand + '\', this.value)" aria-label="Select device for ' + escapeHtml(brand) + '">' + opts + '</select>'
       + '</div>'
-      + '<h2>' + p.name + '</h2>'
-      + '<div class="cat">' + (p.brand || '') + ' · ' + p.category + ' · ' + currentLocation.name + '</div>'
-      + '<div class="row"><span class="lbl">Materials</span><span class="val">' + fmt(c.mat) + '</span></div>'
-      + '<div class="row"><span class="lbl">Labour</span><span class="val">' + fmt(c.lab) + '</span></div>'
-      + '<div class="row"><span class="lbl">Overheads</span><span class="val">' + fmt(c.ovh) + '</span></div>'
-      + '<div class="row"><span class="lbl">Margin</span><span class="val">' + fmt(c.margin) + '</span></div>'
-      + '<div class="row big"><span>Variable FOB</span><span>' + fmt(c.fob) + '</span></div>'
-      + moqLine
-      + '<div class="row"><span class="lbl">Retail</span><span class="val">' + fmt(p.retailPrice) + '</span></div>';
-    g.appendChild(d);
+      + '</div>'
+      + '<div class="company-summary">'
+      + '<div class="company-cost-lines">'
+      + '<div class="company-cost-line"><div class="lbl">Materials</div><div class="val">' + fmt(c.mat) + '</div></div>'
+      + '<div class="company-cost-line"><div class="lbl">Labour</div><div class="val">' + fmt(c.lab) + '</div></div>'
+      + '<div class="company-cost-line"><div class="lbl">Overheads</div><div class="val">' + fmt(c.ovh) + '</div></div>'
+      + '<div class="company-cost-line"><div class="lbl">Margin</div><div class="val">' + fmt(c.margin) + '</div></div>'
+      + '<div class="company-cost-line highlight"><div class="lbl">Variable FOB</div><div class="val">' + fmt(c.fob) + '</div></div>'
+      + '<div class="company-cost-line highlight"><div class="lbl">Total unit cost @ MOQ</div><div class="val">' + fmt(totalUnit) + '</div></div>'
+      + '</div>'
+      + '<div class="company-meta">'
+      + '<div class="company-meta-line"><span class="lbl">MOQ (current tier)</span><span class="val">' + moqEffective.toLocaleString() + ' units</span></div>'
+      + '<div class="company-meta-line"><span class="lbl">Fixed pool</span><span class="val">$' + (product.moq ? product.moq.fixedCostPool.toLocaleString() : '0') + '</span></div>'
+      + '<div class="company-meta-line"><span class="lbl">Fixed per unit</span><span class="val">' + fmt(fixedPerUnit) + '</span></div>'
+      + '<div class="company-meta-line"><span class="lbl">Retail price</span><span class="val">' + fmt(retail) + '</span></div>'
+      + '<div class="company-meta-line"><span class="lbl">FOB as % of retail</span><span class="val">' + fobPct.toFixed(1) + '%</span></div>'
+      + '<div class="company-meta-line"><span class="lbl">CO₂e per device</span><span class="val">' + carbon.totalCO2e.toFixed(3) + ' kg</span></div>'
+      + '<div class="company-actions">'
+      + '<button class="btn-dive" onclick="selectProduct(\'' + product.id + '\')">🔍 Deep dive into this device</button>'
+      + '</div>'
+      + '</div>'
+      + '</div>';
+
+    wrap.appendChild(row);
   });
 }
-function uploadProductImage(productId, input) {
-  const file = input.files[0]; if (!file) return;
-  if (file.size > 800 * 1024) { alert('Image is too large for browser storage. Please use an image under 800 KB.'); return; }
-  const reader = new FileReader();
-  reader.onload = e => {
-    try { localStorage.setItem('htp_product_image_' + productId, e.target.result); renderCards(); }
-    catch (err) { alert('Browser storage is full.'); }
-  };
-  reader.readAsDataURL(file);
+
+function onCompanyDeviceChange(brand, productId) {
+  companySelections[brand] = productId;
+  safeRender('companyRows', renderCompanyRows);
 }
+
+/* ============================================================
+   DEEP DIVE (drilldown)
+   ============================================================ */
+
 function selectProduct(id) {
   selected = data.products.find(p => p.id === id);
+  if (!selected) return;
   document.getElementById('drill').classList.add('on');
   expandedNodes = {};
   const rootPath = selected.costTree.name;
   expandedNodes[rootPath] = true;
   selected.costTree.children.forEach(c => { expandedNodes[rootPath + '/' + c.name] = true; });
   renderDrilldown();
+  const drill = document.getElementById('drill');
+  if (drill) setTimeout(() => drill.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' }), 80);
   syncUrl();
 }
 function renderDrilldown() {
@@ -2227,9 +2447,10 @@ function sortBy(col) { if (sortState.column === col) sortState.dir = sortState.d
 
 function onLocationChange() {
   currentLocation = data.assumptions.locations.find(l => l.id === document.getElementById('locationSelect').value);
-  safeRender('cards', renderCards);
+  safeRender('companyRows', renderCompanyRows);
   if (selected) safeRender('drilldown', renderDrilldown);
   safeRender('negotiation', renderNegotiationTab);
+  safeRender('forecast', renderForecastTab);
   safeRender('e2e', renderE2ETab);
   safeRender('competitive', renderCompetitiveTab);
   if (currentBriefProduct) safeRender('brief', () => renderNegotiationBrief(currentBriefProduct));
@@ -2237,7 +2458,7 @@ function onLocationChange() {
 }
 function onTierChange() {
   currentTier = document.getElementById('tierSelect').value;
-  safeRender('cards', renderCards);
+  safeRender('companyRows', renderCompanyRows);
   if (selected) safeRender('drilldown', renderDrilldown);
   safeRender('negotiation', renderNegotiationTab);
   safeRender('e2e', renderE2ETab);
@@ -2338,9 +2559,10 @@ function renderAssumptionEditors() {
 function updateLocField(locId, key, val) {
   const loc = data.assumptions.locations.find(l => l.id === locId);
   loc[key] = parseFloat(val);
-  safeRender('cards', renderCards);
+  safeRender('companyRows', renderCompanyRows);
   if (selected) safeRender('drilldown', renderDrilldown);
   safeRender('negotiation', renderNegotiationTab);
+  safeRender('forecast', renderForecastTab);
   safeRender('e2e', renderE2ETab);
   safeRender('competitive', renderCompetitiveTab);
   if (currentBriefProduct) safeRender('brief', () => renderNegotiationBrief(currentBriefProduct));
@@ -2348,9 +2570,10 @@ function updateLocField(locId, key, val) {
 function updateMaterial(key, val) {
   if (typeof data.assumptions.materialPrices[key] === 'object') data.assumptions.materialPrices[key].price = parseFloat(val);
   else data.assumptions.materialPrices[key] = parseFloat(val);
-  safeRender('cards', renderCards);
+  safeRender('companyRows', renderCompanyRows);
   if (selected) safeRender('drilldown', renderDrilldown);
   safeRender('negotiation', renderNegotiationTab);
+  safeRender('forecast', renderForecastTab);
   safeRender('e2e', renderE2ETab);
   safeRender('competitive', renderCompetitiveTab);
   if (currentBriefProduct) safeRender('brief', () => renderNegotiationBrief(currentBriefProduct));
@@ -2363,9 +2586,10 @@ function resetAssumptions() {
   localStorage.removeItem(STORAGE_KEY);
   editingLocId = data.assumptions.locations[0].id;
   safeRender('assumptions', renderAssumptionEditors);
-  safeRender('cards', renderCards);
+  safeRender('companyRows', renderCompanyRows);
   if (selected) safeRender('drilldown', renderDrilldown);
   safeRender('negotiation', renderNegotiationTab);
+  safeRender('forecast', renderForecastTab);
   safeRender('e2e', renderE2ETab);
   safeRender('competitive', renderCompetitiveTab);
 }
