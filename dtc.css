@@ -93,3 +93,96 @@
 .progress-fill.success { background: linear-gradient(90deg, #2d6a4f 0%, #40916c 100%); }
 .progress-text { font-size: 12px; color: #555; margin-top: 8px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .progress-text .eta { color: #888; font-size: 11px; font-style: italic; white-space: nowrap; }
+
+/* ============================================================
+   GLB VIEWER — exploded view + parts list
+   ============================================================ */
+
+.viewer-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: #555;
+  border-left: 3px solid #4a148c;
+}
+.viewer-status.loading { border-left-color: #f57c00; background: #fff8e1; }
+.viewer-status.error   { border-left-color: #c62828; background: #ffebee; color: #991b1b; }
+.viewer-status.success { border-left-color: #2d6a4f; background: #e8f5e9; color: #1b4332; }
+.viewer-status-text { flex: 1; }
+.viewer-status-progress {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: #666;
+}
+
+.explode-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.explode-row input[type="range"] { flex: 1; min-width: 150px; cursor: pointer; accent-color: #4a148c; }
+.explode-value {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: #4a148c;
+  min-width: 44px;
+  text-align: right;
+}
+
+.parts-panel {
+  margin-top: 14px;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 10px 12px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.parts-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #888;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+.parts-panel-header button {
+  font-size: 10px;
+  padding: 3px 8px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #555;
+}
+.parts-panel-header button:hover { border-color: #4a148c; color: #4a148c; }
+.part-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 8px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #333;
+  margin-bottom: 2px;
+}
+.part-item:hover { background: #ede9fe; color: #4a148c; }
+.part-item.selected { background: #4a148c; color: #fff; }
+.part-item .part-index {
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  opacity: 0.6;
+  margin-right: 8px;
+}
+.part-item .part-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
