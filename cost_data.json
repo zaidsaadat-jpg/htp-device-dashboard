@@ -1,20 +1,33 @@
 {
-  "version": "1.1",
+  "version": "3.0",
   "last_updated": "2026-10-15",
   "currency": "USD",
   "category": "htp_devices",
-  "notes": "HTP device costing model — BAT glo, PMI IQOS, JTI Ploom. Devices only. USD. Not actual manufacturer data.",
+  "notes": "HTP device costing model v3.0 — recalibrated to real-world production volumes (1M–4.5M units/year). Finishing operations (anodizing, bead blasting, laser engraving, painting) modelled as separate cost category with dedicated machine assumptions.",
 
   "assumptions": {
     "sources": {
+      "teardowns": "IQOS ILUMA 工程样机拆解报告; WTI IQOS ILUMA 分解調査レポート; glo Hyper+ exploded diagram; Ploom X teardown analysis",
+      "production_volumes": "PMI 2024 annual report (139.7B HTU sticks); BAT H2 2025 earnings; JTI 2024 annual report (10.9B sticks); industry analyst estimates",
+      "finishing_costs": "Rapid-Protos aluminum coating guide 2026; Yicen Precision anodising cost guide 2026; SOMI surface finishing cost breakdown",
       "labour_rates": "China Shenzhen electronics benchmark 2026; EU manufacturing benchmark; Malaysia SEA electronics benchmark",
-      "machine_rates": "Electronics SMT/assembly line benchmarks",
-      "material_prices": "Industry teardown estimates; supplier benchmarks; iFixit teardowns"
+      "machine_rates": "Electronics SMT/assembly line benchmarks; finishing equipment supplier quotes"
+    },
+    "costCategories": {
+      "electronics": "PCB assembly, semiconductors, passive components, sensors, connectors",
+      "mechanical": "Housing, chassis, seals, fasteners, display, buttons, USB-C port (excl. finishing)",
+      "finishing": "Anodizing, bead blasting, laser engraving, painting, surface treatment",
+      "heatingEngine": "Heating element, induction coil, susceptor, thermal interface, insulation",
+      "battery": "Li-ion cell, BMS, protection circuit, battery holder",
+      "mva": "Material Value Add — assembly labour, SMT labour, final assembly, testing, QC",
+      "amortization": "Tooling, moulds, fixtures, test equipment depreciation",
+      "packaging": "Retail box, cable, manual, inserts, polybag",
+      "profitMargin": "ODM gross margin on FOB"
     },
     "locations": [
-      { "id": "china", "name": "China (Shenzhen)", "laborRatePerHr": 4.05, "machineRatePerHr": 3.05, "overheadRatePerHr": 1.40, "freightPerUnit": 0.85, "dutyRatePercent": 0, "source": "China electronics benchmark 2026" },
-      { "id": "poland", "name": "Poland", "laborRatePerHr": 8.65, "machineRatePerHr": 4.45, "overheadRatePerHr": 2.30, "freightPerUnit": 0.70, "dutyRatePercent": 0, "source": "EU manufacturing benchmark 2026" },
-      { "id": "malaysia", "name": "Malaysia", "laborRatePerHr": 5.20, "machineRatePerHr": 3.55, "overheadRatePerHr": 1.80, "freightPerUnit": 0.90, "dutyRatePercent": 0, "source": "Southeast Asia electronics benchmark 2026" }
+      { "id": "china", "name": "China (Shenzhen)", "laborRatePerHr": 4.05, "machineRatePerHr": 3.05, "overheadRatePerHr": 1.40, "source": "China electronics benchmark 2026" },
+      { "id": "poland", "name": "Poland", "laborRatePerHr": 8.65, "machineRatePerHr": 4.45, "overheadRatePerHr": 2.30, "source": "EU manufacturing benchmark 2026" },
+      { "id": "malaysia", "name": "Malaysia", "laborRatePerHr": 5.20, "machineRatePerHr": 3.55, "overheadRatePerHr": 1.80, "source": "Southeast Asia electronics benchmark 2026" }
     ],
     "defaultLocationId": "china",
     "supplierTiers": {
@@ -23,56 +36,181 @@
       "tier3": { "name": "Tier 3 — Niche / Small Run", "laborMultiplier": 0.85, "machineMultiplier": 0.75, "overheadMultiplier": 0.80, "moqMultiplier": 0.4, "marginPercent": 10 }
     },
     "materialPrices": {
-      "battery_perUnit":          { "price": 6.10, "source": "Li-ion 2900mAh, bulk", "co2ePerKg": 65 },
-      "heatingElement_resistive": { "price": 1.52, "source": "Copper coil + ceramic core", "co2ePerKg": 25 },
-      "heatingElement_induction": { "price": 2.29, "source": "Induction coil assembly (PMI SMARTCORE)", "co2ePerKg": 30 },
-      "heatingElement_external":  { "price": 1.78, "source": "External heat chamber (JTI HEATFLOW)", "co2ePerKg": 28 },
-      "pcbController_perUnit":    { "price": 3.68, "source": "MCU + BMS + memory", "co2ePerKg": 55 },
-      "display_amoled":           { "price": 4.06, "source": "AMOLED display module", "co2ePerKg": 45 },
-      "display_touchscreen":      { "price": 5.21, "source": "Touchscreen module", "co2ePerKg": 50 },
-      "display_led":              { "price": 0.51, "source": "LED indicator array", "co2ePerKg": 15 },
-      "housing_aluminium":        { "price": 2.29, "source": "Aluminium housing, CNC", "co2ePerKg": 12 },
-      "housing_plastic":          { "price": 1.14, "source": "Engineering plastic housing, injection moulded", "co2ePerKg": 6 },
-      "usbC_perUnit":             { "price": 0.44, "source": "USB-C port + cable", "co2ePerKg": 8 },
-      "packaging_perUnit":        { "price": 1.08, "source": "Carton + inserts + manual", "co2ePerKg": 3 }
+      "_comment_electronics": "Semiconductor and PCB components",
+      "mcu_16bit_perUnit":        { "price": 1.85, "source": "16-bit MCU", "co2ePerKg": 55 },
+      "pmic_buckboost_perUnit":   { "price": 0.72, "source": "Buck-boost converter (TI TPS63020 class)", "co2ePerKg": 50 },
+      "charger_ic_perUnit":       { "price": 0.65, "source": "USB charging IC (TI BQ24190 class)", "co2ePerKg": 50 },
+      "sync_rectifier_perUnit":   { "price": 0.38, "source": "Synchronous rectifier (Dialog iW873 class)", "co2ePerKg": 48 },
+      "mosfet_perUnit":           { "price": 0.22, "source": "Power MOSFET (Samwin SW4N65 class)", "co2ePerKg": 45 },
+      "thermistor_perUnit":       { "price": 0.15, "source": "NTC thermistor", "co2ePerKg": 30 },
+      "inductor_perUnit":         { "price": 0.18, "source": "Power inductor, 2.2µH", "co2ePerKg": 35 },
+      "capacitor_mlcc_perUnit":   { "price": 0.08, "source": "MLCC capacitor array (~20 units)", "co2ePerKg": 25 },
+      "resistor_array_perUnit":   { "price": 0.05, "source": "Resistor array (~25 units)", "co2ePerKg": 20 },
+      "diode_perUnit":            { "price": 0.06, "source": "Schottky / Zener diodes (~6 units)", "co2ePerKg": 28 },
+      "pcb_6layer_perUnit":       { "price": 1.20, "source": "6-layer FR-4 PCB, ENIG finish", "co2ePerKg": 40 },
+      "flex_pcb_perUnit":         { "price": 0.45, "source": "Flexible PCB for display/button interconnect", "co2ePerKg": 35 },
+      "crystal_oscillator_perUnit": { "price": 0.12, "source": "32.768 kHz crystal oscillator", "co2ePerKg": 30 },
+      "connector_usbc_perUnit":   { "price": 0.44, "source": "USB-C receptacle, 16-pin", "co2ePerKg": 8 },
+      "connector_fpc_perUnit":    { "price": 0.18, "source": "FPC connector, 30-pin", "co2ePerKg": 10 },
+      "led_indicator_perUnit":    { "price": 0.10, "source": "LED indicator array (~4 units)", "co2ePerKg": 15 },
+
+      "_comment_mechanical": "Housing and chassis (excl. finishing)",
+      "housing_aluminium_perUnit": { "price": 2.29, "source": "Aluminium housing, CNC machined (unfinished)", "co2ePerKg": 12 },
+      "housing_plastic_perUnit":  { "price": 1.14, "source": "Engineering plastic housing, injection moulded (unfinished)", "co2ePerKg": 6 },
+      "chassis_perUnit":          { "price": 0.85, "source": "Metal chassis for component mounting", "co2ePerKg": 15 },
+      "display_amoled_perUnit":   { "price": 4.06, "source": "AMOLED display module", "co2ePerKg": 45 },
+      "display_touchscreen_perUnit": { "price": 5.21, "source": "Touchscreen module", "co2ePerKg": 50 },
+      "display_led_perUnit":      { "price": 0.51, "source": "LED indicator array", "co2ePerKg": 15 },
+      "seal_gasket_perUnit":      { "price": 0.22, "source": "Silicone gasket and seals", "co2ePerKg": 5 },
+      "fastener_screw_set_perUnit": { "price": 0.08, "source": "Screw set, 6-8 pieces", "co2ePerKg": 3 },
+      "button_switch_perUnit":    { "price": 0.12, "source": "Tactile switch / button", "co2ePerKg": 8 },
+      "wire_harness_perUnit":     { "price": 0.35, "source": "Internal wiring harness", "co2ePerKg": 6 },
+      "adhesive_thermal_perUnit": { "price": 0.18, "source": "Thermal adhesive / gap filler", "co2ePerKg": 4 },
+
+      "_comment_finishing": "Surface treatment consumables (machine time is in costTree)",
+      "anodizing_chemicals_perUnit": { "price": 0.03, "source": "Anodizing bath chemicals (sulphuric acid, dye)", "co2ePerKg": 8 },
+      "bead_blast_media_perUnit": { "price": 0.008, "source": "Glass bead blasting media", "co2ePerKg": 3 },
+      "paint_powder_perUnit":     { "price": 0.08, "source": "Powder coating / paint consumables", "co2ePerKg": 5 },
+      "laser_consumables_perUnit": { "price": 0.01, "source": "Laser engraving consumables", "co2ePerKg": 2 },
+
+      "_comment_heating": "Heating engine components",
+      "heatingElement_resistive_perUnit": { "price": 1.52, "source": "Copper coil + ceramic core (resistive)", "co2ePerKg": 25 },
+      "heatingElement_induction_perUnit": { "price": 2.29, "source": "Induction coil assembly + ferrite (SMARTCORE)", "co2ePerKg": 30 },
+      "heatingElement_external_perUnit": { "price": 1.78, "source": "External heat chamber (HEATFLOW)", "co2ePerKg": 28 },
+      "susceptor_perUnit":        { "price": 0.35, "source": "Metal susceptor element", "co2ePerKg": 40 },
+      "thermal_insulation_perUnit": { "price": 0.28, "source": "Aerogel / ceramic thermal insulation", "co2ePerKg": 10 },
+      "heating_chamber_perUnit":  { "price": 0.65, "source": "Stainless steel heating chamber", "co2ePerKg": 18 },
+
+      "_comment_battery": "Battery system",
+      "battery_cell_perUnit":     { "price": 4.80, "source": "Li-ion 2900mAh (BAK N18650CP, EVE INR18650 33V class)", "co2ePerKg": 65 },
+      "bms_board_perUnit":        { "price": 0.85, "source": "Battery management system PCB", "co2ePerKg": 45 },
+      "battery_protection_perUnit": { "price": 0.32, "source": "Protection IC + MOSFET", "co2ePerKg": 40 },
+      "battery_holder_perUnit":   { "price": 0.15, "source": "Battery mounting bracket", "co2ePerKg": 5 },
+
+      "_comment_packaging": "Packaging and accessories",
+      "packaging_retail_box_perUnit": { "price": 1.08, "source": "Carton + inserts + manual", "co2ePerKg": 3 },
+      "packaging_usb_cable_perUnit": { "price": 0.85, "source": "USB-C cable, 1m", "co2ePerKg": 8 },
+      "packaging_manual_perUnit": { "price": 0.15, "source": "Multi-language manual", "co2ePerKg": 2 },
+      "packaging_polybag_perUnit": { "price": 0.05, "source": "Antistatic polybag", "co2ePerKg": 1 }
     },
     "machineAssumptions": {
       "smtLine":        { "capitalCost": 2286000, "lifeYears": 8, "operatingHoursPerYear": 5000, "powerCostPerHr": 15.20, "maintenancePercentOfDep": 6 },
       "assemblyLine":   { "capitalCost": 571500, "lifeYears": 7, "operatingHoursPerYear": 4000, "powerCostPerHr": 5.70, "maintenancePercentOfDep": 5 },
-      "testingStation": { "capitalCost": 228600, "lifeYears": 6, "operatingHoursPerYear": 4000, "powerCostPerHr": 2.80, "maintenancePercentOfDep": 8 }
+      "testingStation": { "capitalCost": 228600, "lifeYears": 6, "operatingHoursPerYear": 4000, "powerCostPerHr": 2.80, "maintenancePercentOfDep": 8 },
+      "anodizingLine":  { "capitalCost": 350000, "lifeYears": 10, "operatingHoursPerYear": 6000, "powerCostPerHr": 8.50, "maintenancePercentOfDep": 7 },
+      "beadBlastCabinet": { "capitalCost": 45000, "lifeYears": 8, "operatingHoursPerYear": 4000, "powerCostPerHr": 3.20, "maintenancePercentOfDep": 6 },
+      "laserEngraver":  { "capitalCost": 85000, "lifeYears": 7, "operatingHoursPerYear": 5000, "powerCostPerHr": 2.10, "maintenancePercentOfDep": 5 },
+      "paintBooth":     { "capitalCost": 180000, "lifeYears": 10, "operatingHoursPerYear": 4000, "powerCostPerHr": 6.50, "maintenancePercentOfDep": 8 }
     }
   },
 
   "products": [
     {
-      "id": "glo-hilo",
-      "name": "BAT glo Hilo",
-      "brand": "BAT",
+      "id": "iqos-iluma-i-prime",
+      "name": "PMI IQOS ILUMA i PRIME",
+      "brand": "PMI",
       "category": "HTP Device",
-      "retailPrice": 37.00,
+      "retailPrice": 113.00,
       "supplierTier": "tier1",
-      "moq": { "current": 100000, "min": 20000, "max": 500000, "step": 10000, "unit": "units", "fixedCostPool": 3556000 },
+      "annualVolume": 1500000,
+      "moq": { "current": 150000, "min": 50000, "max": 500000, "step": 25000, "unit": "units", "fixedCostPool": 2850000 },
       "costTree": {
         "name": "Device FOB",
         "children": [
-          { "name": "Materials", "children": [
-            { "name": "Battery", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_perUnit" } },
-            { "name": "Heating Element (dual resistive)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_resistive" } },
-            { "name": "PCB Controller", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcbController_perUnit" } },
-            { "name": "AMOLED Display", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_amoled" } },
-            { "name": "Aluminium Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_aluminium" } },
-            { "name": "USB-C", "type": "material", "inputs": { "quantity": 1, "priceKey": "usbC_perUnit" } },
-            { "name": "Packaging", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_perUnit" } }
-          ]},
-          { "name": "Labour (CMT)", "children": [
-            { "name": "SMT", "type": "time_labour", "inputs": { "minutesPerUnit": 4.5 } },
-            { "name": "Assembly", "type": "time_labour", "inputs": { "minutesPerUnit": 6.5 } },
-            { "name": "Test & QC", "type": "time_labour", "inputs": { "minutesPerUnit": 2.5 } }
-          ]},
-          { "name": "Overheads", "children": [
-            { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 20 } }
-          ]},
-          { "name": "Factory Margin", "type": "percent_of_subtotal", "inputs": { "percent": 15 } }
+          {
+            "name": "Electronics",
+            "children": [
+              { "name": "MCU (16-bit)", "type": "material", "inputs": { "quantity": 1, "priceKey": "mcu_16bit_perUnit" } },
+              { "name": "PMIC (Buck-Boost)", "type": "material", "inputs": { "quantity": 1, "priceKey": "pmic_buckboost_perUnit" } },
+              { "name": "Charger IC", "type": "material", "inputs": { "quantity": 1, "priceKey": "charger_ic_perUnit" } },
+              { "name": "Sync Rectifier", "type": "material", "inputs": { "quantity": 1, "priceKey": "sync_rectifier_perUnit" } },
+              { "name": "Power MOSFET", "type": "material", "inputs": { "quantity": 1, "priceKey": "mosfet_perUnit" } },
+              { "name": "Thermistor", "type": "material", "inputs": { "quantity": 2, "priceKey": "thermistor_perUnit" } },
+              { "name": "Power Inductor", "type": "material", "inputs": { "quantity": 2, "priceKey": "inductor_perUnit" } },
+              { "name": "Capacitors (MLCC)", "type": "material", "inputs": { "quantity": 20, "priceKey": "capacitor_mlcc_perUnit" } },
+              { "name": "Resistors", "type": "material", "inputs": { "quantity": 25, "priceKey": "resistor_array_perUnit" } },
+              { "name": "Diodes", "type": "material", "inputs": { "quantity": 6, "priceKey": "diode_perUnit" } },
+              { "name": "Crystal Oscillator", "type": "material", "inputs": { "quantity": 1, "priceKey": "crystal_oscillator_perUnit" } },
+              { "name": "PCB (6-layer)", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcb_6layer_perUnit" } },
+              { "name": "Flex PCB", "type": "material", "inputs": { "quantity": 1, "priceKey": "flex_pcb_perUnit" } },
+              { "name": "USB-C Connector", "type": "material", "inputs": { "quantity": 1, "priceKey": "connector_usbc_perUnit" } },
+              { "name": "FPC Connectors", "type": "material", "inputs": { "quantity": 2, "priceKey": "connector_fpc_perUnit" } },
+              { "name": "LED Indicators", "type": "material", "inputs": { "quantity": 4, "priceKey": "led_indicator_perUnit" } }
+            ]
+          },
+          {
+            "name": "Mechanical",
+            "children": [
+              { "name": "Aluminium Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_aluminium_perUnit" } },
+              { "name": "Chassis", "type": "material", "inputs": { "quantity": 1, "priceKey": "chassis_perUnit" } },
+              { "name": "Touchscreen Display", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_touchscreen_perUnit" } },
+              { "name": "Seals & Gaskets", "type": "material", "inputs": { "quantity": 1, "priceKey": "seal_gasket_perUnit" } },
+              { "name": "Fasteners", "type": "material", "inputs": { "quantity": 1, "priceKey": "fastener_screw_set_perUnit" } },
+              { "name": "Button Switch", "type": "material", "inputs": { "quantity": 1, "priceKey": "button_switch_perUnit" } },
+              { "name": "Wire Harness", "type": "material", "inputs": { "quantity": 1, "priceKey": "wire_harness_perUnit" } },
+              { "name": "Thermal Adhesive", "type": "material", "inputs": { "quantity": 1, "priceKey": "adhesive_thermal_perUnit" } }
+            ]
+          },
+          {
+            "name": "Finishing",
+            "children": [
+              { "name": "Bead Blasting Labour", "type": "time_labour", "inputs": { "minutesPerUnit": 0.15 } },
+              { "name": "Bead Blasting Machine", "type": "time_machine", "inputs": { "minutesPerUnit": 0.15, "machineKey": "beadBlastCabinet" } },
+              { "name": "Bead Blast Media", "type": "material", "inputs": { "quantity": 1, "priceKey": "bead_blast_media_perUnit" } },
+              { "name": "Anodizing Labour", "type": "time_labour", "inputs": { "minutesPerUnit": 0.20 } },
+              { "name": "Anodizing Line", "type": "time_machine", "inputs": { "minutesPerUnit": 0.20, "machineKey": "anodizingLine" } },
+              { "name": "Anodizing Chemicals", "type": "material", "inputs": { "quantity": 1, "priceKey": "anodizing_chemicals_perUnit" } },
+              { "name": "Laser Engraving Labour", "type": "time_labour", "inputs": { "minutesPerUnit": 0.10 } },
+              { "name": "Laser Engraver", "type": "time_machine", "inputs": { "minutesPerUnit": 0.10, "machineKey": "laserEngraver" } },
+              { "name": "Laser Consumables", "type": "material", "inputs": { "quantity": 1, "priceKey": "laser_consumables_perUnit" } }
+            ]
+          },
+          {
+            "name": "Heating Engine",
+            "children": [
+              { "name": "Induction Coil (SMARTCORE)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_induction_perUnit" } },
+              { "name": "Susceptor Element", "type": "material", "inputs": { "quantity": 1, "priceKey": "susceptor_perUnit" } },
+              { "name": "Heating Chamber", "type": "material", "inputs": { "quantity": 1, "priceKey": "heating_chamber_perUnit" } },
+              { "name": "Thermal Insulation", "type": "material", "inputs": { "quantity": 1, "priceKey": "thermal_insulation_perUnit" } }
+            ]
+          },
+          {
+            "name": "Battery",
+            "children": [
+              { "name": "Li-ion Cell", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_cell_perUnit" } },
+              { "name": "BMS Board", "type": "material", "inputs": { "quantity": 1, "priceKey": "bms_board_perUnit" } },
+              { "name": "Protection Circuit", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_protection_perUnit" } },
+              { "name": "Battery Holder", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_holder_perUnit" } }
+            ]
+          },
+          {
+            "name": "MVA (Material Value Add)",
+            "children": [
+              { "name": "SMT Labour", "type": "time_labour", "inputs": { "minutesPerUnit": 5.5 } },
+              { "name": "Assembly Labour", "type": "time_labour", "inputs": { "minutesPerUnit": 9.0 } },
+              { "name": "Test & QC Labour", "type": "time_labour", "inputs": { "minutesPerUnit": 3.5 } },
+              { "name": "SMT Machine", "type": "time_machine", "inputs": { "minutesPerUnit": 5.5, "machineKey": "smtLine" } },
+              { "name": "Assembly Machine", "type": "time_machine", "inputs": { "minutesPerUnit": 9.0, "machineKey": "assemblyLine" } },
+              { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 30 } }
+            ]
+          },
+          {
+            "name": "Amortization",
+            "children": [
+              { "name": "Tooling & Moulds", "type": "fixed_amortised", "inputs": { "mouldCost": 85000, "lifecycleUnits": 4500000 } },
+              { "name": "Test Equipment", "type": "fixed_amortised", "inputs": { "mouldCost": 180000, "lifecycleUnits": 4500000 } }
+            ]
+          },
+          {
+            "name": "Packaging",
+            "children": [
+              { "name": "Retail Box", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_retail_box_perUnit" } },
+              { "name": "USB-C Cable", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_usb_cable_perUnit" } },
+              { "name": "Manual", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_manual_perUnit" } },
+              { "name": "Polybag", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_polybag_perUnit" } }
+            ]
+          },
+          { "name": "Profit Margin", "type": "percent_of_subtotal", "inputs": { "percent": 18 } }
         ]
       }
     },
@@ -83,284 +221,97 @@
       "category": "HTP Device",
       "retailPrice": 45.00,
       "supplierTier": "tier1",
-      "moq": { "current": 80000, "min": 20000, "max": 400000, "step": 10000, "unit": "units", "fixedCostPool": 4064000 },
+      "annualVolume": 2000000,
+      "moq": { "current": 200000, "min": 60000, "max": 600000, "step": 25000, "unit": "units", "fixedCostPool": 2200000 },
       "costTree": {
         "name": "Device FOB",
         "children": [
-          { "name": "Materials", "children": [
-            { "name": "Battery", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_perUnit" } },
-            { "name": "Heating Element (dual resistive)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_resistive" } },
-            { "name": "PCB Controller", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcbController_perUnit" } },
-            { "name": "Touchscreen Display", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_touchscreen" } },
-            { "name": "Aluminium Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_aluminium" } },
-            { "name": "USB-C", "type": "material", "inputs": { "quantity": 1, "priceKey": "usbC_perUnit" } },
-            { "name": "Packaging", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_perUnit" } }
-          ]},
-          { "name": "Labour (CMT)", "children": [
-            { "name": "SMT", "type": "time_labour", "inputs": { "minutesPerUnit": 4.5 } },
-            { "name": "Assembly", "type": "time_labour", "inputs": { "minutesPerUnit": 8.0 } },
-            { "name": "Test & QC", "type": "time_labour", "inputs": { "minutesPerUnit": 3.0 } }
-          ]},
-          { "name": "Overheads", "children": [
-            { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 25 } }
-          ]},
-          { "name": "Factory Margin", "type": "percent_of_subtotal", "inputs": { "percent": 15 } }
-        ]
-      }
-    },
-    {
-      "id": "glo-hyper-pro-plus",
-      "name": "BAT glo Hyper Pro Plus",
-      "brand": "BAT",
-      "category": "HTP Device",
-      "retailPrice": 23.00,
-      "supplierTier": "tier2",
-      "moq": { "current": 150000, "min": 30000, "max": 800000, "step": 10000, "unit": "units", "fixedCostPool": 2794000 },
-      "costTree": {
-        "name": "Device FOB",
-        "children": [
-          { "name": "Materials", "children": [
-            { "name": "Battery", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_perUnit" } },
-            { "name": "Heating Element (resistive)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_resistive" } },
-            { "name": "PCB Controller", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcbController_perUnit" } },
-            { "name": "AMOLED Display", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_amoled" } },
-            { "name": "Plastic Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_plastic" } },
-            { "name": "USB-C", "type": "material", "inputs": { "quantity": 1, "priceKey": "usbC_perUnit" } },
-            { "name": "Packaging", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_perUnit" } }
-          ]},
-          { "name": "Labour (CMT)", "children": [
-            { "name": "SMT", "type": "time_labour", "inputs": { "minutesPerUnit": 4.0 } },
-            { "name": "Assembly", "type": "time_labour", "inputs": { "minutesPerUnit": 5.5 } },
-            { "name": "Test & QC", "type": "time_labour", "inputs": { "minutesPerUnit": 2.0 } }
-          ]},
-          { "name": "Overheads", "children": [
-            { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 18 } }
-          ]},
-          { "name": "Factory Margin", "type": "percent_of_subtotal", "inputs": { "percent": 12 } }
-        ]
-      }
-    },
-    {
-      "id": "glo-hyper-air",
-      "name": "BAT glo Hyper Air",
-      "brand": "BAT",
-      "category": "HTP Device",
-      "retailPrice": 10.00,
-      "supplierTier": "tier2",
-      "moq": { "current": 200000, "min": 50000, "max": 1000000, "step": 10000, "unit": "units", "fixedCostPool": 2286000 },
-      "costTree": {
-        "name": "Device FOB",
-        "children": [
-          { "name": "Materials", "children": [
-            { "name": "Battery", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_perUnit" } },
-            { "name": "Heating Element (resistive)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_resistive" } },
-            { "name": "PCB Controller", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcbController_perUnit" } },
-            { "name": "LED Indicators", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_led" } },
-            { "name": "Plastic Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_plastic" } },
-            { "name": "USB-C", "type": "material", "inputs": { "quantity": 1, "priceKey": "usbC_perUnit" } },
-            { "name": "Packaging", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_perUnit" } }
-          ]},
-          { "name": "Labour (CMT)", "children": [
-            { "name": "SMT", "type": "time_labour", "inputs": { "minutesPerUnit": 3.5 } },
-            { "name": "Assembly", "type": "time_labour", "inputs": { "minutesPerUnit": 4.5 } },
-            { "name": "Test & QC", "type": "time_labour", "inputs": { "minutesPerUnit": 1.5 } }
-          ]},
-          { "name": "Overheads", "children": [
-            { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 15 } }
-          ]},
-          { "name": "Factory Margin", "type": "percent_of_subtotal", "inputs": { "percent": 12 } }
-        ]
-      }
-    },
-    {
-      "id": "iqos-iluma-i-prime",
-      "name": "PMI IQOS ILUMA i PRIME",
-      "brand": "PMI",
-      "category": "HTP Device",
-      "retailPrice": 113.00,
-      "supplierTier": "tier1",
-      "moq": { "current": 50000, "min": 10000, "max": 300000, "step": 5000, "unit": "units", "fixedCostPool": 5715000 },
-      "costTree": {
-        "name": "Device FOB",
-        "children": [
-          { "name": "Materials", "children": [
-            { "name": "Battery", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_perUnit" } },
-            { "name": "Induction Coil (SMARTCORE)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_induction" } },
-            { "name": "PCB Controller", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcbController_perUnit" } },
-            { "name": "Touchscreen Display", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_touchscreen" } },
-            { "name": "Aluminium Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_aluminium" } },
-            { "name": "USB-C", "type": "material", "inputs": { "quantity": 1, "priceKey": "usbC_perUnit" } },
-            { "name": "Packaging", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_perUnit" } }
-          ]},
-          { "name": "Labour (CMT)", "children": [
-            { "name": "SMT", "type": "time_labour", "inputs": { "minutesPerUnit": 5.5 } },
-            { "name": "Assembly", "type": "time_labour", "inputs": { "minutesPerUnit": 9.0 } },
-            { "name": "Test & QC", "type": "time_labour", "inputs": { "minutesPerUnit": 3.5 } }
-          ]},
-          { "name": "Overheads", "children": [
-            { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 30 } }
-          ]},
-          { "name": "Factory Margin", "type": "percent_of_subtotal", "inputs": { "percent": 18 } }
-        ]
-      }
-    },
-    {
-      "id": "iqos-iluma-i",
-      "name": "PMI IQOS ILUMA i",
-      "brand": "PMI",
-      "category": "HTP Device",
-      "retailPrice": 88.00,
-      "supplierTier": "tier1",
-      "moq": { "current": 80000, "min": 20000, "max": 400000, "step": 10000, "unit": "units", "fixedCostPool": 4826000 },
-      "costTree": {
-        "name": "Device FOB",
-        "children": [
-          { "name": "Materials", "children": [
-            { "name": "Battery", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_perUnit" } },
-            { "name": "Induction Coil (SMARTCORE)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_induction" } },
-            { "name": "PCB Controller", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcbController_perUnit" } },
-            { "name": "Touchscreen Display", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_touchscreen" } },
-            { "name": "Plastic Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_plastic" } },
-            { "name": "USB-C", "type": "material", "inputs": { "quantity": 1, "priceKey": "usbC_perUnit" } },
-            { "name": "Packaging", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_perUnit" } }
-          ]},
-          { "name": "Labour (CMT)", "children": [
-            { "name": "SMT", "type": "time_labour", "inputs": { "minutesPerUnit": 5.0 } },
-            { "name": "Assembly", "type": "time_labour", "inputs": { "minutesPerUnit": 7.5 } },
-            { "name": "Test & QC", "type": "time_labour", "inputs": { "minutesPerUnit": 3.0 } }
-          ]},
-          { "name": "Overheads", "children": [
-            { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 25 } }
-          ]},
-          { "name": "Factory Margin", "type": "percent_of_subtotal", "inputs": { "percent": 16 } }
-        ]
-      }
-    },
-    {
-      "id": "iqos-iluma-i-one",
-      "name": "PMI IQOS ILUMA i ONE",
-      "brand": "PMI",
-      "category": "HTP Device",
-      "retailPrice": 50.00,
-      "supplierTier": "tier1",
-      "moq": { "current": 120000, "min": 30000, "max": 600000, "step": 10000, "unit": "units", "fixedCostPool": 4064000 },
-      "costTree": {
-        "name": "Device FOB",
-        "children": [
-          { "name": "Materials", "children": [
-            { "name": "Battery", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_perUnit" } },
-            { "name": "Induction Coil (SMARTCORE)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_induction" } },
-            { "name": "PCB Controller", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcbController_perUnit" } },
-            { "name": "LED Indicators", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_led" } },
-            { "name": "Plastic Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_plastic" } },
-            { "name": "USB-C", "type": "material", "inputs": { "quantity": 1, "priceKey": "usbC_perUnit" } },
-            { "name": "Packaging", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_perUnit" } }
-          ]},
-          { "name": "Labour (CMT)", "children": [
-            { "name": "SMT", "type": "time_labour", "inputs": { "minutesPerUnit": 4.0 } },
-            { "name": "Assembly", "type": "time_labour", "inputs": { "minutesPerUnit": 5.0 } },
-            { "name": "Test & QC", "type": "time_labour", "inputs": { "minutesPerUnit": 2.0 } }
-          ]},
-          { "name": "Overheads", "children": [
-            { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 18 } }
-          ]},
-          { "name": "Factory Margin", "type": "percent_of_subtotal", "inputs": { "percent": 14 } }
-        ]
-      }
-    },
-    {
-      "id": "iqos-iluma",
-      "name": "PMI IQOS ILUMA",
-      "brand": "PMI",
-      "category": "HTP Device",
-      "retailPrice": 62.00,
-      "supplierTier": "tier1",
-      "moq": { "current": 100000, "min": 25000, "max": 500000, "step": 10000, "unit": "units", "fixedCostPool": 4318000 },
-      "costTree": {
-        "name": "Device FOB",
-        "children": [
-          { "name": "Materials", "children": [
-            { "name": "Battery", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_perUnit" } },
-            { "name": "Induction Coil (SMARTCORE)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_induction" } },
-            { "name": "PCB Controller", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcbController_perUnit" } },
-            { "name": "LED Indicators", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_led" } },
-            { "name": "Aluminium Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_aluminium" } },
-            { "name": "USB-C", "type": "material", "inputs": { "quantity": 1, "priceKey": "usbC_perUnit" } },
-            { "name": "Packaging", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_perUnit" } }
-          ]},
-          { "name": "Labour (CMT)", "children": [
-            { "name": "SMT", "type": "time_labour", "inputs": { "minutesPerUnit": 4.5 } },
-            { "name": "Assembly", "type": "time_labour", "inputs": { "minutesPerUnit": 6.5 } },
-            { "name": "Test & QC", "type": "time_labour", "inputs": { "minutesPerUnit": 2.5 } }
-          ]},
-          { "name": "Overheads", "children": [
-            { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 22 } }
-          ]},
-          { "name": "Factory Margin", "type": "percent_of_subtotal", "inputs": { "percent": 15 } }
-        ]
-      }
-    },
-    {
-      "id": "ploom-aura",
-      "name": "JTI Ploom AURA",
-      "brand": "JTI",
-      "category": "HTP Device",
-      "retailPrice": 24.00,
-      "supplierTier": "tier2",
-      "moq": { "current": 200000, "min": 50000, "max": 800000, "step": 10000, "unit": "units", "fixedCostPool": 3302000 },
-      "costTree": {
-        "name": "Device FOB",
-        "children": [
-          { "name": "Materials", "children": [
-            { "name": "Battery", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_perUnit" } },
-            { "name": "External Heat Chamber (HEATFLOW)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_external" } },
-            { "name": "PCB Controller", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcbController_perUnit" } },
-            { "name": "LED Indicators", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_led" } },
-            { "name": "Aluminium Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_aluminium" } },
-            { "name": "USB-C", "type": "material", "inputs": { "quantity": 1, "priceKey": "usbC_perUnit" } },
-            { "name": "Packaging", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_perUnit" } }
-          ]},
-          { "name": "Labour (CMT)", "children": [
-            { "name": "SMT", "type": "time_labour", "inputs": { "minutesPerUnit": 4.0 } },
-            { "name": "Assembly", "type": "time_labour", "inputs": { "minutesPerUnit": 6.0 } },
-            { "name": "Test & QC", "type": "time_labour", "inputs": { "minutesPerUnit": 2.0 } }
-          ]},
-          { "name": "Overheads", "children": [
-            { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 20 } }
-          ]},
-          { "name": "Factory Margin", "type": "percent_of_subtotal", "inputs": { "percent": 12 } }
-        ]
-      }
-    },
-    {
-      "id": "ploom-cube",
-      "name": "JTI Ploom CUBE",
-      "brand": "JTI",
-      "category": "HTP Device",
-      "retailPrice": 24.00,
-      "supplierTier": "tier2",
-      "moq": { "current": 180000, "min": 40000, "max": 700000, "step": 10000, "unit": "units", "fixedCostPool": 3048000 },
-      "costTree": {
-        "name": "Device FOB",
-        "children": [
-          { "name": "Materials", "children": [
-            { "name": "Battery", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_perUnit" } },
-            { "name": "External Heat Chamber (HEATFLOW)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_external" } },
-            { "name": "PCB Controller", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcbController_perUnit" } },
-            { "name": "LED Indicators", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_led" } },
-            { "name": "Plastic Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_plastic" } },
-            { "name": "USB-C", "type": "material", "inputs": { "quantity": 1, "priceKey": "usbC_perUnit" } },
-            { "name": "Packaging", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_perUnit" } }
-          ]},
-          { "name": "Labour (CMT)", "children": [
-            { "name": "SMT", "type": "time_labour", "inputs": { "minutesPerUnit": 3.5 } },
-            { "name": "Assembly", "type": "time_labour", "inputs": { "minutesPerUnit": 5.0 } },
-            { "name": "Test & QC", "type": "time_labour", "inputs": { "minutesPerUnit": 1.5 } }
-          ]},
-          { "name": "Overheads", "children": [
-            { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 16 } }
-          ]},
-          { "name": "Factory Margin", "type": "percent_of_subtotal", "inputs": { "percent": 11 } }
+          {
+            "name": "Electronics",
+            "children": [
+              { "name": "MCU (16-bit)", "type": "material", "inputs": { "quantity": 1, "priceKey": "mcu_16bit_perUnit" } },
+              { "name": "PMIC (Buck-Boost)", "type": "material", "inputs": { "quantity": 1, "priceKey": "pmic_buckboost_perUnit" } },
+              { "name": "Charger IC", "type": "material", "inputs": { "quantity": 1, "priceKey": "charger_ic_perUnit" } },
+              { "name": "MOSFET", "type": "material", "inputs": { "quantity": 2, "priceKey": "mosfet_perUnit" } },
+              { "name": "Thermistor", "type": "material", "inputs": { "quantity": 1, "priceKey": "thermistor_perUnit" } },
+              { "name": "Inductor", "type": "material", "inputs": { "quantity": 1, "priceKey": "inductor_perUnit" } },
+              { "name": "Capacitors (MLCC)", "type": "material", "inputs": { "quantity": 15, "priceKey": "capacitor_mlcc_perUnit" } },
+              { "name": "Resistors", "type": "material", "inputs": { "quantity": 20, "priceKey": "resistor_array_perUnit" } },
+              { "name": "Diodes", "type": "material", "inputs": { "quantity": 4, "priceKey": "diode_perUnit" } },
+              { "name": "PCB (4-layer)", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcb_6layer_perUnit" } },
+              { "name": "USB-C Connector", "type": "material", "inputs": { "quantity": 1, "priceKey": "connector_usbc_perUnit" } },
+              { "name": "LED Indicators", "type": "material", "inputs": { "quantity": 3, "priceKey": "led_indicator_perUnit" } }
+            ]
+          },
+          {
+            "name": "Mechanical",
+            "children": [
+              { "name": "Aluminium Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_aluminium_perUnit" } },
+              { "name": "Touchscreen Display", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_touchscreen_perUnit" } },
+              { "name": "Seals & Gaskets", "type": "material", "inputs": { "quantity": 1, "priceKey": "seal_gasket_perUnit" } },
+              { "name": "Fasteners", "type": "material", "inputs": { "quantity": 1, "priceKey": "fastener_screw_set_perUnit" } },
+              { "name": "Button Switch", "type": "material", "inputs": { "quantity": 1, "priceKey": "button_switch_perUnit" } },
+              { "name": "Wire Harness", "type": "material", "inputs": { "quantity": 1, "priceKey": "wire_harness_perUnit" } }
+            ]
+          },
+          {
+            "name": "Finishing",
+            "children": [
+              { "name": "Bead Blasting Labour", "type": "time_labour", "inputs": { "minutesPerUnit": 0.15 } },
+              { "name": "Bead Blasting Machine", "type": "time_machine", "inputs": { "minutesPerUnit": 0.15, "machineKey": "beadBlastCabinet" } },
+              { "name": "Bead Blast Media", "type": "material", "inputs": { "quantity": 1, "priceKey": "bead_blast_media_perUnit" } },
+              { "name": "Anodizing Labour", "type": "time_labour", "inputs": { "minutesPerUnit": 0.20 } },
+              { "name": "Anodizing Line", "type": "time_machine", "inputs": { "minutesPerUnit": 0.20, "machineKey": "anodizingLine" } },
+              { "name": "Anodizing Chemicals", "type": "material", "inputs": { "quantity": 1, "priceKey": "anodizing_chemicals_perUnit" } },
+              { "name": "Laser Engraving Labour", "type": "time_labour", "inputs": { "minutesPerUnit": 0.10 } },
+              { "name": "Laser Engraver", "type": "time_machine", "inputs": { "minutesPerUnit": 0.10, "machineKey": "laserEngraver" } },
+              { "name": "Laser Consumables", "type": "material", "inputs": { "quantity": 1, "priceKey": "laser_consumables_perUnit" } }
+            ]
+          },
+          {
+            "name": "Heating Engine",
+            "children": [
+              { "name": "Resistive Heating Element", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_resistive_perUnit" } },
+              { "name": "Heating Chamber", "type": "material", "inputs": { "quantity": 1, "priceKey": "heating_chamber_perUnit" } },
+              { "name": "Thermal Insulation", "type": "material", "inputs": { "quantity": 1, "priceKey": "thermal_insulation_perUnit" } }
+            ]
+          },
+          {
+            "name": "Battery",
+            "children": [
+              { "name": "Li-ion Cell (BAK N18650CP / EVE INR18650 33V)", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_cell_perUnit" } },
+              { "name": "BMS Board", "type": "material", "inputs": { "quantity": 1, "priceKey": "bms_board_perUnit" } },
+              { "name": "Protection Circuit", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_protection_perUnit" } }
+            ]
+          },
+          {
+            "name": "MVA (Material Value Add)",
+            "children": [
+              { "name": "SMT Labour", "type": "time_labour", "inputs": { "minutesPerUnit": 4.5 } },
+              { "name": "Assembly Labour", "type": "time_labour", "inputs": { "minutesPerUnit": 8.0 } },
+              { "name": "Test & QC Labour", "type": "time_labour", "inputs": { "minutesPerUnit": 3.0 } },
+              { "name": "SMT Machine", "type": "time_machine", "inputs": { "minutesPerUnit": 4.5, "machineKey": "smtLine" } },
+              { "name": "Assembly Machine", "type": "time_machine", "inputs": { "minutesPerUnit": 8.0, "machineKey": "assemblyLine" } },
+              { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 25 } }
+            ]
+          },
+          {
+            "name": "Amortization",
+            "children": [
+              { "name": "Tooling & Moulds", "type": "fixed_amortised", "inputs": { "mouldCost": 65000, "lifecycleUnits": 6000000 } },
+              { "name": "Test Equipment", "type": "fixed_amortised", "inputs": { "mouldCost": 140000, "lifecycleUnits": 6000000 } }
+            ]
+          },
+          {
+            "name": "Packaging",
+            "children": [
+              { "name": "Retail Box", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_retail_box_perUnit" } },
+              { "name": "USB-C Cable", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_usb_cable_perUnit" } },
+              { "name": "Manual", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_manual_perUnit" } },
+              { "name": "Polybag", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_polybag_perUnit" } }
+            ]
+          },
+          { "name": "Profit Margin", "type": "percent_of_subtotal", "inputs": { "percent": 15 } }
         ]
       }
     },
@@ -371,60 +322,89 @@
       "category": "HTP Device",
       "retailPrice": 13.00,
       "supplierTier": "tier2",
-      "moq": { "current": 250000, "min": 60000, "max": 1000000, "step": 10000, "unit": "units", "fixedCostPool": 2540000 },
+      "annualVolume": 2500000,
+      "moq": { "current": 250000, "min": 80000, "max": 750000, "step": 25000, "unit": "units", "fixedCostPool": 1500000 },
       "costTree": {
         "name": "Device FOB",
         "children": [
-          { "name": "Materials", "children": [
-            { "name": "Battery", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_perUnit" } },
-            { "name": "External Heat Chamber (HEATFLOW)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_external" } },
-            { "name": "PCB Controller", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcbController_perUnit" } },
-            { "name": "LED Indicators", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_led" } },
-            { "name": "Plastic Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_plastic" } },
-            { "name": "USB-C", "type": "material", "inputs": { "quantity": 1, "priceKey": "usbC_perUnit" } },
-            { "name": "Packaging", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_perUnit" } }
-          ]},
-          { "name": "Labour (CMT)", "children": [
-            { "name": "SMT", "type": "time_labour", "inputs": { "minutesPerUnit": 3.5 } },
-            { "name": "Assembly", "type": "time_labour", "inputs": { "minutesPerUnit": 4.5 } },
-            { "name": "Test & QC", "type": "time_labour", "inputs": { "minutesPerUnit": 1.5 } }
-          ]},
-          { "name": "Overheads", "children": [
-            { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 14 } }
-          ]},
-          { "name": "Factory Margin", "type": "percent_of_subtotal", "inputs": { "percent": 10 } }
-        ]
-      }
-    },
-    {
-      "id": "ploom-x",
-      "name": "JTI Ploom X",
-      "brand": "JTI",
-      "category": "HTP Device",
-      "retailPrice": 8.00,
-      "supplierTier": "tier2",
-      "moq": { "current": 300000, "min": 80000, "max": 1200000, "step": 20000, "unit": "units", "fixedCostPool": 2286000 },
-      "costTree": {
-        "name": "Device FOB",
-        "children": [
-          { "name": "Materials", "children": [
-            { "name": "Battery", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_perUnit" } },
-            { "name": "External Heat Chamber (HEATFLOW)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_external" } },
-            { "name": "PCB Controller", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcbController_perUnit" } },
-            { "name": "LED Indicators", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_led" } },
-            { "name": "Plastic Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_plastic" } },
-            { "name": "USB-C", "type": "material", "inputs": { "quantity": 1, "priceKey": "usbC_perUnit" } },
-            { "name": "Packaging", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_perUnit" } }
-          ]},
-          { "name": "Labour (CMT)", "children": [
-            { "name": "SMT", "type": "time_labour", "inputs": { "minutesPerUnit": 3.0 } },
-            { "name": "Assembly", "type": "time_labour", "inputs": { "minutesPerUnit": 4.0 } },
-            { "name": "Test & QC", "type": "time_labour", "inputs": { "minutesPerUnit": 1.5 } }
-          ]},
-          { "name": "Overheads", "children": [
-            { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 12 } }
-          ]},
-          { "name": "Factory Margin", "type": "percent_of_subtotal", "inputs": { "percent": 10 } }
+          {
+            "name": "Electronics",
+            "children": [
+              { "name": "MCU (16-bit)", "type": "material", "inputs": { "quantity": 1, "priceKey": "mcu_16bit_perUnit" } },
+              { "name": "Charger IC", "type": "material", "inputs": { "quantity": 1, "priceKey": "charger_ic_perUnit" } },
+              { "name": "MOSFET", "type": "material", "inputs": { "quantity": 1, "priceKey": "mosfet_perUnit" } },
+              { "name": "Thermistor", "type": "material", "inputs": { "quantity": 1, "priceKey": "thermistor_perUnit" } },
+              { "name": "Capacitors (MLCC)", "type": "material", "inputs": { "quantity": 10, "priceKey": "capacitor_mlcc_perUnit" } },
+              { "name": "Resistors", "type": "material", "inputs": { "quantity": 15, "priceKey": "resistor_array_perUnit" } },
+              { "name": "PCB (4-layer)", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcb_6layer_perUnit" } },
+              { "name": "USB-C Connector", "type": "material", "inputs": { "quantity": 1, "priceKey": "connector_usbc_perUnit" } },
+              { "name": "LED Indicators", "type": "material", "inputs": { "quantity": 4, "priceKey": "led_indicator_perUnit" } }
+            ]
+          },
+          {
+            "name": "Mechanical",
+            "children": [
+              { "name": "Plastic Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_plastic_perUnit" } },
+              { "name": "Seals & Gaskets", "type": "material", "inputs": { "quantity": 1, "priceKey": "seal_gasket_perUnit" } },
+              { "name": "Fasteners", "type": "material", "inputs": { "quantity": 1, "priceKey": "fastener_screw_set_perUnit" } },
+              { "name": "Button Switch (capacitive)", "type": "material", "inputs": { "quantity": 1, "priceKey": "button_switch_perUnit" } },
+              { "name": "Wire Harness", "type": "material", "inputs": { "quantity": 1, "priceKey": "wire_harness_perUnit" } }
+            ]
+          },
+          {
+            "name": "Finishing",
+            "children": [
+              { "name": "Painting Labour", "type": "time_labour", "inputs": { "minutesPerUnit": 0.18 } },
+              { "name": "Paint Booth", "type": "time_machine", "inputs": { "minutesPerUnit": 0.18, "machineKey": "paintBooth" } },
+              { "name": "Paint / Powder", "type": "material", "inputs": { "quantity": 1, "priceKey": "paint_powder_perUnit" } },
+              { "name": "Laser Engraving Labour", "type": "time_labour", "inputs": { "minutesPerUnit": 0.08 } },
+              { "name": "Laser Engraver", "type": "time_machine", "inputs": { "minutesPerUnit": 0.08, "machineKey": "laserEngraver" } },
+              { "name": "Laser Consumables", "type": "material", "inputs": { "quantity": 1, "priceKey": "laser_consumables_perUnit" } }
+            ]
+          },
+          {
+            "name": "Heating Engine",
+            "children": [
+              { "name": "External Heat Chamber (HEATFLOW)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_external_perUnit" } },
+              { "name": "Heating Chamber", "type": "material", "inputs": { "quantity": 1, "priceKey": "heating_chamber_perUnit" } },
+              { "name": "Thermal Insulation", "type": "material", "inputs": { "quantity": 1, "priceKey": "thermal_insulation_perUnit" } }
+            ]
+          },
+          {
+            "name": "Battery",
+            "children": [
+              { "name": "Li-ion Cell", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_cell_perUnit" } },
+              { "name": "BMS Board", "type": "material", "inputs": { "quantity": 1, "priceKey": "bms_board_perUnit" } },
+              { "name": "Protection Circuit", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_protection_perUnit" } }
+            ]
+          },
+          {
+            "name": "MVA (Material Value Add)",
+            "children": [
+              { "name": "SMT Labour", "type": "time_labour", "inputs": { "minutesPerUnit": 3.5 } },
+              { "name": "Assembly Labour", "type": "time_labour", "inputs": { "minutesPerUnit": 4.5 } },
+              { "name": "Test & QC Labour", "type": "time_labour", "inputs": { "minutesPerUnit": 1.5 } },
+              { "name": "SMT Machine", "type": "time_machine", "inputs": { "minutesPerUnit": 3.5, "machineKey": "smtLine" } },
+              { "name": "Assembly Machine", "type": "time_machine", "inputs": { "minutesPerUnit": 4.5, "machineKey": "assemblyLine" } },
+              { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 14 } }
+            ]
+          },
+          {
+            "name": "Amortization",
+            "children": [
+              { "name": "Tooling & Moulds", "type": "fixed_amortised", "inputs": { "mouldCost": 35000, "lifecycleUnits": 7500000 } },
+              { "name": "Test Equipment", "type": "fixed_amortised", "inputs": { "mouldCost": 80000, "lifecycleUnits": 7500000 } }
+            ]
+          },
+          {
+            "name": "Packaging",
+            "children": [
+              { "name": "Retail Box", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_retail_box_perUnit" } },
+              { "name": "USB-C Cable", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_usb_cable_perUnit" } },
+              { "name": "Manual", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_manual_perUnit" } }
+            ]
+          },
+          { "name": "Profit Margin", "type": "percent_of_subtotal", "inputs": { "percent": 10 } }
         ]
       }
     }
@@ -435,8 +415,7 @@
       "bat":  { "name": "British American Tobacco", "fy2025": { "netSalesM": 32800, "ngpSharePct": 18 } },
       "pmi":  { "name": "Philip Morris International", "fy2025": { "netSalesM": 38500, "ngpSharePct": 40 } },
       "jti":  { "name": "Japan Tobacco International", "fy2025": { "netSalesM": 21500, "ngpSharePct": 12 } }
-    },
-    "notes": "Brand-level financials only. Product-level comparisons are handled by the any-to-any compare tab."
+    }
   },
 
   "forecasts": {
@@ -444,24 +423,20 @@
     "horizon": 18,
     "quarterLabels": ["Q4 2026", "Q1 2027", "Q2 2027", "Q3 2027", "Q4 2027", "Q1 2028"],
     "drivers": [
-      { "id": "lithium_carbonate", "name": "Lithium Carbonate", "affects": { "type": "material", "key": "battery_perUnit" }, "source": "Benchmark Mineral Intelligence, Oct 2026", "citation": "Lithium prices stabilised after the 2024 trough; modest decline expected as new supply comes online through 2027.", "url": "https://www.benchmarkminerals.com", "quarterlyChange": [-0.6, -0.5, -0.4, -0.3, -0.2, -0.2] },
-      { "id": "copper_resistive", "name": "Copper (resistive heaters)", "affects": { "type": "material", "key": "heatingElement_resistive" }, "source": "World Bank Commodity Markets Outlook, Oct 2026", "citation": "Copper supported by electrification demand; projected +2 to +3% p.a. through 2028.", "url": "https://www.worldbank.org/en/research/commodity-markets", "quarterlyChange": [0.5, 0.6, 0.6, 0.5, 0.5, 0.5] },
-      { "id": "copper_induction", "name": "Copper (induction coils)", "affects": { "type": "material", "key": "heatingElement_induction" }, "source": "World Bank Commodity Markets Outlook, Oct 2026", "citation": "Same LME copper index applies.", "url": "", "quarterlyChange": [0.5, 0.6, 0.6, 0.5, 0.5, 0.5] },
-      { "id": "copper_external", "name": "Copper (external heaters)", "affects": { "type": "material", "key": "heatingElement_external" }, "source": "World Bank Commodity Markets Outlook, Oct 2026", "citation": "Same LME copper index applies.", "url": "", "quarterlyChange": [0.5, 0.6, 0.6, 0.5, 0.5, 0.5] },
-      { "id": "semiconductor_index", "name": "Semiconductor Index", "affects": { "type": "material", "key": "pcbController_perUnit" }, "source": "SIA / WSTS, Oct 2026", "citation": "MCU market normalising after the 2024 correction; stable pricing expected through 2027.", "url": "https://www.semiconductors.org", "quarterlyChange": [-0.3, -0.2, -0.2, -0.1, -0.1, -0.1] },
-      { "id": "display_amoled_index", "name": "AMOLED Panel Index", "affects": { "type": "material", "key": "display_amoled" }, "source": "DSCC, Sep 2026", "citation": "AMOLED costs declining steadily with Chinese capacity ramp.", "url": "https://www.displaysupplychain.com", "quarterlyChange": [-1.2, -1.0, -0.9, -0.8, -0.7, -0.6] },
-      { "id": "display_touch_index", "name": "Touchscreen Panel Index", "affects": { "type": "material", "key": "display_touchscreen" }, "source": "DSCC, Sep 2026", "citation": "Touchscreen modules follow the AMOLED trend.", "url": "", "quarterlyChange": [-1.0, -0.9, -0.8, -0.7, -0.6, -0.5] },
-      { "id": "aluminium_lme", "name": "Aluminium (LME)", "affects": { "type": "material", "key": "housing_aluminium" }, "source": "World Bank Commodity Markets Outlook, Oct 2026", "citation": "Aluminium supported by energy-transition demand; modest upward pressure.", "url": "", "quarterlyChange": [0.3, 0.3, 0.4, 0.3, 0.3, 0.3] },
-      { "id": "polymer_index", "name": "Engineering Polymer Index", "affects": { "type": "material", "key": "housing_plastic" }, "source": "ICIS, Oct 2026", "citation": "Polymer prices tracking crude; slight easing expected through 2027.", "url": "https://www.icis.com", "quarterlyChange": [-0.2, -0.2, -0.1, -0.1, -0.1, 0.0] },
-      { "id": "paper_pulp_index", "name": "Paper & Pulp Index", "affects": { "type": "material", "key": "packaging_perUnit" }, "source": "Fastmarkets, Oct 2026", "citation": "Packaging input costs stable to slightly rising.", "url": "", "quarterlyChange": [0.3, 0.4, 0.4, 0.3, 0.3, 0.3] },
-      { "id": "labour_china", "name": "China Labour Rate", "affects": { "type": "labour", "key": "china" }, "source": "China HR / SSB, Oct 2026", "citation": "Shenzhen electronics wages rising ~5 to 6% annually.", "url": "", "quarterlyChange": [1.3, 1.3, 1.4, 1.3, 1.3, 1.3] },
-      { "id": "labour_poland", "name": "Poland Labour Rate", "affects": { "type": "labour", "key": "poland" }, "source": "Eurostat / Polish GUS, Oct 2026", "citation": "Polish manufacturing wages rising 7 to 8% annually.", "url": "", "quarterlyChange": [1.8, 1.8, 1.9, 1.8, 1.8, 1.8] },
-      { "id": "labour_malaysia", "name": "Malaysia Labour Rate", "affects": { "type": "labour", "key": "malaysia" }, "source": "DOSM Malaysia, Oct 2026", "citation": "Malaysian electronics wages rising ~4% annually.", "url": "", "quarterlyChange": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0] }
+      { "id": "lithium_carbonate", "name": "Lithium Carbonate", "affects": { "type": "material", "key": "battery_cell_perUnit" }, "source": "Benchmark Mineral Intelligence, Oct 2026", "quarterlyChange": [-0.6, -0.5, -0.4, -0.3, -0.2, -0.2] },
+      { "id": "copper_lme", "name": "Copper (LME)", "affects": { "type": "material", "key": "heatingElement_induction_perUnit" }, "source": "World Bank Commodity Markets Outlook, Oct 2026", "quarterlyChange": [0.5, 0.6, 0.6, 0.5, 0.5, 0.5] },
+      { "id": "copper_resistive", "name": "Copper (resistive)", "affects": { "type": "material", "key": "heatingElement_resistive_perUnit" }, "source": "World Bank Commodity Markets Outlook, Oct 2026", "quarterlyChange": [0.5, 0.6, 0.6, 0.5, 0.5, 0.5] },
+      { "id": "semiconductor_index", "name": "Semiconductor Index", "affects": { "type": "material", "key": "mcu_16bit_perUnit" }, "source": "SIA / WSTS, Oct 2026", "quarterlyChange": [-0.3, -0.2, -0.2, -0.1, -0.1, -0.1] },
+      { "id": "passive_component_index", "name": "Passive Component Index", "affects": { "type": "material", "key": "capacitor_mlcc_perUnit" }, "source": "ECIA, Oct 2026", "quarterlyChange": [-0.5, -0.4, -0.3, -0.3, -0.2, -0.2] },
+      { "id": "aluminium_lme", "name": "Aluminium (LME)", "affects": { "type": "material", "key": "housing_aluminium_perUnit" }, "source": "World Bank Commodity Markets Outlook, Oct 2026", "quarterlyChange": [0.3, 0.3, 0.4, 0.3, 0.3, 0.3] },
+      { "id": "polymer_index", "name": "Engineering Polymer Index", "affects": { "type": "material", "key": "housing_plastic_perUnit" }, "source": "ICIS, Oct 2026", "quarterlyChange": [-0.2, -0.2, -0.1, -0.1, -0.1, 0.0] },
+      { "id": "labour_china", "name": "China Labour Rate", "affects": { "type": "labour", "key": "china" }, "source": "China HR / SSB, Oct 2026", "quarterlyChange": [1.3, 1.3, 1.4, 1.3, 1.3, 1.3] },
+      { "id": "labour_poland", "name": "Poland Labour Rate", "affects": { "type": "labour", "key": "poland" }, "source": "Eurostat / Polish GUS, Oct 2026", "quarterlyChange": [1.8, 1.8, 1.9, 1.8, 1.8, 1.8] },
+      { "id": "labour_malaysia", "name": "Malaysia Labour Rate", "affects": { "type": "labour", "key": "malaysia" }, "source": "DOSM Malaysia, Oct 2026", "quarterlyChange": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0] }
     ]
   },
 
   "endToEnd": {
-    "notes": "Device-only landed cost. HTP devices are classified as consumer electronics — zero tariff in most developed markets, VAT applies at destination.",
     "sourceCountries": [
       { "id": "china",    "name": "China",    "flag": "🇨🇳" },
       { "id": "poland",   "name": "Poland",   "flag": "🇵🇱" },
@@ -490,9 +465,23 @@
         "euDestinations": ["germany"],
         "cbamYearPct": { "2026": 2.5, "2028": 10, "2030": 48.5, "2034": 100 },
         "currentYear": 2026,
-        "manufacturingCO2ePerUnit": 3.2,
-        "notes": "HTP devices are not currently in CBAM scope. Modelled as indicative scope-3 exposure to EU destinations."
+        "manufacturingCO2ePerUnit": 3.2
       }
     }
+  },
+
+  "processFlow": {
+    "stages": [
+      { "id": "component-sourcing", "order": 1, "name": "Component Sourcing", "icon": "🔋", "costSharePct": 38.0, "location": "Global suppliers — China · South Korea · Japan", "leadTimeDays": "60–90 days", "drivers": ["Lithium cell pricing", "MCU lead time", "AMOLED panel supply", "Aluminium LME", "Component yield rate"], "process": "Lithium-ion cells, microcontrollers, PCB blanks, AMOLED/touchscreen modules, aluminium billet or polymer pellets, resistive or induction heating assemblies, and USB-C connectors are sourced from specialised suppliers.", "inputs": ["Li-ion cells", "MCU + BMS chips", "Display modules", "PCB blanks", "Aluminium billet / polymer pellets", "Heating elements"], "outputs": ["QC-approved component lots", "Supplier batch records"] },
+      { "id": "pcb-smt", "order": 2, "name": "PCB Fabrication & SMT", "icon": "🔌", "costSharePct": 14.0, "location": "ODM facility — Shenzhen · Penang · Wrocław", "leadTimeDays": "5–10 days", "drivers": ["SMT line utilisation", "MCU placement yield", "AOI false-positive rate", "Reflow energy cost"], "process": "Bare PCBs are fabricated with copper traces and solder mask. In SMT, solder paste is stencil-printed onto pads, high-speed pick-and-place machines position the MCU, BMS, memory, and passives, and boards reflow through a multi-zone oven.", "inputs": ["PCB blanks", "MCU chips", "BMS ICs", "Passive components", "Solder paste", "Reflow energy"], "outputs": ["Assembled controller PCBs", "AOI pass/fail records"] },
+      { "id": "heating-assembly", "order": 3, "name": "Heating Element Assembly", "icon": "🔥", "costSharePct": 7.0, "location": "ODM facility — clean room", "leadTimeDays": "3–5 days", "drivers": ["Coil winding precision", "Ceramic core quality", "Thermal calibration time", "Resistance tolerance"], "process": "The heating element — resistive coil with ceramic core (BAT glo, JTI Ploom) or induction coil plus susceptor design (PMI IQOS SMARTCORE) — is manufactured and calibrated.", "inputs": ["Copper wire", "Ceramic core", "Ferrite elements (induction)", "Amplifier circuit (induction)"], "outputs": ["Calibrated heating assemblies", "Thermal test certificates"] },
+      { "id": "housing-fab", "order": 4, "name": "Housing Fabrication", "icon": "🏭", "costSharePct": 10.0, "location": "ODM facility — machining & moulding", "leadTimeDays": "7–12 days", "drivers": ["CNC cycle time", "Injection cycle time", "Mould tooling amortisation", "Dimensional yield"], "process": "Aluminium housings are CNC-machined from billet, deburred, and prepared for finishing. Polymer housings are injection-moulded in multi-cavity tools.", "inputs": ["Aluminium billet / polymer pellets", "Cutting tools", "Mould release agent"], "outputs": ["Unfinished housings", "Dimensional inspection reports"] },
+      { "id": "finishing", "order": 5, "name": "Finishing & Surface Treatment", "icon": "✨", "costSharePct": 4.0, "location": "ODM facility — finishing line", "leadTimeDays": "3–5 days", "drivers": ["Anodizing tank temperature", "Dye concentration", "Bead blast media condition", "Laser power & speed", "Paint booth humidity", "Batch size (lot charge amortization)"], "process": "Aluminium housings are bead-blasted for surface preparation, then Type II anodized (clear or dyed) in sulphuric acid baths. Laser engraving adds logos and regulatory marks. Plastic housings are painted in a spray booth and cured. Each step has its own lot charge, machine time, and quality inspection gate.", "inputs": ["Unfinished housings", "Anodizing chemicals (sulphuric acid, dye)", "Glass bead media", "Paint / powder", "Laser consumables"], "outputs": ["Finished housings", "Anodizing certification", "Colour-match inspection records"] },
+      { "id": "sub-assembly", "order": 6, "name": "Sub-Assembly", "icon": "⚙️", "costSharePct": 8.0, "location": "ODM facility — assembly line", "leadTimeDays": "3–5 days", "drivers": ["Battery pack wiring time", "BMS calibration", "PCB mount accuracy", "Connector insertion torque"], "process": "Battery cells are welded into a pack and wired to the BMS. The controller PCB is mounted into the housing, USB-C port and connectors are fixed at specified torque, and internal wiring is routed.", "inputs": ["Battery cells", "BMS board", "Controller PCB", "Housing", "Connectors", "Wiring harness"], "outputs": ["Electrically functional device core", "Interim test results"] },
+      { "id": "final-assembly", "order": 7, "name": "Final Assembly", "icon": "🔧", "costSharePct": 7.0, "location": "ODM facility — assembly line", "leadTimeDays": "2–4 days", "drivers": ["Holder-charger mating tolerance", "Seal & gasket fitting time", "Lid mechanism actuation cycles", "Torque spec enforcement"], "process": "For two-piece devices, the holder and pocket charger are mated and the connection validated across 500 open/close cycles. Seals, gaskets, and lid mechanisms are fitted.", "inputs": ["Device core", "Charger module (2-piece only)", "Seals & gaskets", "Fasteners"], "outputs": ["Fully assembled device", "Mechanical validation records"] },
+      { "id": "qc-testing", "order": 8, "name": "QC & Testing", "icon": "🔍", "costSharePct": 4.0, "location": "ODM facility — test cell", "leadTimeDays": "2–3 days", "drivers": ["Test station cycle time", "Yield loss rate", "Battery cycle test throughput", "Thermal chamber energy"], "process": "100% functional test: power-on, heating cycle to spec temperature, LED/display check, USB charging, and firmware validation. Sample-based destructive testing: drop test, thermal cycling, battery life.", "inputs": ["Assembled device", "Test firmware", "Thermal chamber energy", "Destructive sample allocation"], "outputs": ["QC-passed device", "Batch yield records", "Test certificates"] },
+      { "id": "packaging", "order": 9, "name": "Packaging", "icon": "📦", "costSharePct": 3.0, "location": "ODM facility — packing line", "leadTimeDays": "1–2 days", "drivers": ["Retail box cost", "USB-C cable cost", "Manual printing", "Packing labour minutes"], "process": "Devices are wiped clean, firmware-version labelled, and placed into retail packaging with USB-C cable, multi-language manual, warranty card, and cleaning tool. Boxes are sealed with anti-tamper tape.", "inputs": ["QC-passed device", "Retail box", "USB-C cable", "Manual + warranty", "Cleaning tool"], "outputs": ["Retail-ready package (FOB ready)", "Pallet manifest"] },
+      { "id": "margin", "order": 10, "name": "Factory Margin", "icon": "💰", "costSharePct": 8.0, "location": "ODM P&L", "leadTimeDays": "—", "drivers": ["Order volume and MOQ", "Negotiated markup percentage", "Overhead recovery rate", "Competitive ODM pressure"], "process": "The ODM's profit on the FOB price. Typically 10–18% for tier-1 ODMs, 8–12% for tier-2, and 6–10% for tier-3.", "inputs": ["—"], "outputs": ["FOB price (factory gate)"] }
+    ]
   }
 }
