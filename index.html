@@ -33,7 +33,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 
-/* COMPANY ROWS */
 .company-row { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 18px; box-shadow: 0 2px 8px rgba(0,0,0,.06); border-left: 5px solid #111; }
 .company-row[data-brand="BAT"] { border-left-color: #003087; }
 .company-row[data-brand="PMI"] { border-left-color: #C8102E; }
@@ -417,7 +416,7 @@ td.lvl.L5 { color: #666; } td.lvl.L6, td.lvl.L7, td.lvl.L8, td.lvl.L9, td.lvl.L1
   <div class="tab-panel active" id="tab-dashboard">
     <div style="background: #e8f5e9; border-left: 4px solid #2d6a4f; padding: 12px 18px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; color: #333; display: flex; align-items: center; gap: 10px;">
       <span style="font-size: 18px;">💡</span>
-      <span><strong>Pick a device from any company below</strong> to see its live cost summary with the new category breakdown (Electronics, Mechanical, Finishing, Heating, Battery, MVA, Amortization, Packaging, Margin), then click <strong>Deep dive</strong> for the full cost tree and MOQ sensitivity.</span>
+      <span><strong>Pick a device from any company below</strong> to see its live cost summary with the category breakdown (Electronics, Mechanical, Finishing, Heating, Battery, MVA, Amortization, Packaging, Margin), then click <strong>Deep dive</strong> for the full cost tree and MOQ sensitivity.</span>
     </div>
     <div id="companyRows"></div>
     <div class="drill" id="drill">
@@ -571,7 +570,7 @@ td.lvl.L5 { color: #666; } td.lvl.L6, td.lvl.L7, td.lvl.L8, td.lvl.L9, td.lvl.L1
   <div class="tab-panel" id="tab-process">
     <div class="process-header">
       <h3 id="processTitle">🔧 End-to-End Manufacturing Process Flow</h3>
-      <p>How an HTP device is made — from raw component sourcing to factory gate. Finishing (anodizing, bead blasting, laser engraving, painting) is now a dedicated stage.</p>
+      <p>How an HTP device is made — from raw component sourcing to factory gate. Finishing (anodizing, bead blasting, laser engraving, painting) is a dedicated stage.</p>
     </div>
     <div class="process-section">
       <h3>Process timeline</h3>
@@ -644,36 +643,51 @@ td.lvl.L5 { color: #666; } td.lvl.L6, td.lvl.L7, td.lvl.L8, td.lvl.L9, td.lvl.L1
   <div class="tab-panel" id="tab-dtc">
     <div class="dtc-header">
       <h3>🎨 Design-to-Cost &amp; Value Engineering</h3>
-      <p>Cross-functional decision workspace for Design, Procurement, Costing, and Engineering. Adjust the levers below to see live cost and value impact.</p>
+      <p>Cross-functional decision workspace for Design, Procurement, Costing, and Engineering. Adjust the levers below to see live cost and value impact. Upload your own GLB to inspect it in the 3D viewer, with exploded views and per-part selection.</p>
     </div>
     <div class="dtc-layout">
       <div class="dtc-viewer-card">
-        <h4>Device Archetype Viewer</h4>
+        <h4>3D Device Viewer</h4>
+
+        <div class="viewer-status loading" id="viewerStatus">
+          <span class="viewer-status-text" id="viewerStatusText">Loading default model…</span>
+          <span class="viewer-status-progress" id="viewerStatusProgress"></span>
+        </div>
+
         <div class="dtc-upload-zone" id="glbUploadZone">
           <div class="icon">📦</div>
-          <p><strong>Upload 3D model</strong> (.glb or .gltf)</p>
+          <p><strong>Replace model</strong> (.glb or .gltf)</p>
           <p style="font-size:11px;">Drag &amp; drop the file here, or click to browse</p>
           <input type="file" id="glbInput" style="display:none" accept=".glb,.gltf">
-          <div class="upload-progress" id="uploadProgress" style="display:none;">
-            <div class="progress-track"><div class="progress-fill" id="uploadProgressFill"></div></div>
-            <div class="progress-text">
-              <span id="uploadProgressText">Preparing…</span>
-              <span class="eta" id="uploadProgressEta"></span>
-            </div>
-          </div>
         </div>
+
         <div id="viewer3d" class="viewer3d"></div>
         <p class="viewer-hint" id="viewerHint">🖱️ Drag to rotate · Scroll to zoom · Right-click drag to pan</p>
+
         <div class="cad-controls">
           <div class="cad-control-group">
-            <span class="cad-label">Archetype:</span>
-            <div class="cad-chips" id="archetypeChips">
-              <button class="cad-chip active" data-id="two-piece" onclick="setArchetype('two-piece')">🔲 Two-piece</button>
-              <button class="cad-chip" data-id="all-in-one" onclick="setArchetype('all-in-one')">📱 All-in-one</button>
-              <button class="cad-chip" data-id="pocket-charger" onclick="setArchetype('pocket-charger')">🔌 Pocket charger</button>
-              <button class="cad-chip" data-id="holder" onclick="setArchetype('holder')">📎 Holder</button>
+            <span class="cad-label">Exploded:</span>
+            <div class="explode-row" style="flex:1;">
+              <input type="range" id="explodeSlider" min="0" max="100" value="0"
+                     oninput="onExplodeChange(this.value)"
+                     aria-label="Exploded view amount">
+              <span class="explode-value" id="explodeValue">0%</span>
+            </div>
+            <button class="cad-chip" onclick="setExplodePreset(0)">Assembled</button>
+            <button class="cad-chip" onclick="setExplodePreset(50)">Half</button>
+            <button class="cad-chip" onclick="setExplodePreset(100)">Full</button>
+          </div>
+
+          <div class="cad-control-group">
+            <span class="cad-label">Explode axis:</span>
+            <div class="cad-chips" id="explodeDirectionChips">
+              <button class="cad-chip active" data-id="radial" onclick="setExplodeDirection('radial')">Radial</button>
+              <button class="cad-chip" data-id="x" onclick="setExplodeDirection('x')">X</button>
+              <button class="cad-chip" data-id="y" onclick="setExplodeDirection('y')">Y</button>
+              <button class="cad-chip" data-id="z" onclick="setExplodeDirection('z')">Z</button>
             </div>
           </div>
+
           <div class="cad-control-group">
             <span class="cad-label">View:</span>
             <div class="cad-chips" id="viewChips">
@@ -682,6 +696,7 @@ td.lvl.L5 { color: #666; } td.lvl.L6, td.lvl.L7, td.lvl.L8, td.lvl.L9, td.lvl.L1
               <button class="cad-chip" data-id="wireframe" onclick="setViewMode('wireframe')">Wireframe</button>
             </div>
           </div>
+
           <div class="cad-control-group">
             <span class="cad-label">Projection:</span>
             <div class="cad-chips" id="projectionChips">
@@ -689,15 +704,18 @@ td.lvl.L5 { color: #666; } td.lvl.L6, td.lvl.L7, td.lvl.L8, td.lvl.L9, td.lvl.L1
               <button class="cad-chip" data-id="orthographic" onclick="setProjection('orthographic')">Orthographic</button>
             </div>
           </div>
+
           <div class="cad-control-group">
             <span class="cad-label">Material:</span>
             <div class="cad-chips" id="materialChips">
+              <button class="cad-chip" data-id="original" onclick="setMaterialPreset('original')">Original</button>
               <button class="cad-chip active" data-id="matte" onclick="setMaterialPreset('matte')">Matte</button>
               <button class="cad-chip" data-id="gloss" onclick="setMaterialPreset('gloss')">Gloss</button>
               <button class="cad-chip" data-id="metal" onclick="setMaterialPreset('metal')">Metal</button>
               <button class="cad-chip" data-id="fabric" onclick="setMaterialPreset('fabric')">Fabric</button>
             </div>
           </div>
+
           <div class="cad-control-group">
             <span class="cad-label">Views:</span>
             <div class="cad-chips">
@@ -707,16 +725,29 @@ td.lvl.L5 { color: #666; } td.lvl.L6, td.lvl.L7, td.lvl.L8, td.lvl.L9, td.lvl.L1
               <button class="cad-chip" onclick="setViewPreset('iso')">Isometric</button>
             </div>
           </div>
+
           <div class="cad-control-group">
-            <span class="cad-label">Colour:</span>
+            <span class="cad-label">Colour tint:</span>
             <input type="color" id="meshColor" value="#4a148c" onchange="setBaseColor(this.value)">
+            <button class="cad-chip" onclick="resetColor()">↺ Reset colours</button>
           </div>
+
           <div class="cad-control-group">
-            <span class="cad-label">Custom model:</span>
-            <button class="cad-chip" onclick="resetToBuiltIn()">↺ Reset to built-in</button>
+            <span class="cad-label">Model:</span>
+            <button class="cad-chip" onclick="reloadDefaultModel()">↺ Reload default</button>
+            <span id="partCountLabel" style="font-size:11px; color:#888; margin-left:10px;"></span>
           </div>
         </div>
+
+        <div class="parts-panel" id="partsPanel" style="display:none;">
+          <div class="parts-panel-header">
+            <span>Parts</span>
+            <button onclick="clearSelection()">Clear selection</button>
+          </div>
+          <div id="partsList"></div>
+        </div>
       </div>
+
       <div class="dtc-levers-card">
         <h4>Optimization Levers</h4>
         <p class="dtc-subtitle">Live impact of each lever on the selected device's cost</p>
@@ -841,7 +872,7 @@ function escapeHtml(s) {
 }
 
 /* ============================================================
-   COST ENGINE (v3.0 — category aware)
+   COST ENGINE (v3.0 category-aware)
    ============================================================ */
 
 function getTierMultipliers() {
@@ -890,7 +921,6 @@ function evaluateTree(node, loc, matPrices, path) {
 }
 function totalOf(node) { if (typeof node.cost === 'number') return node.cost; return (node.children || []).reduce((s, c) => s + totalOf(c), 0); }
 
-/* v3.0 — calc now returns a category map plus backward-compatible aliases */
 function calc(p, locOverride, matOverride) {
   const loc = locOverride || currentLocation || data.assumptions.locations[0];
   const mats = matOverride || data.assumptions.materialPrices;
@@ -907,19 +937,13 @@ function calc(p, locOverride, matOverride) {
   const heatingEngine = cat['Heating Engine'] || 0;
   const battery       = cat['Battery'] || 0;
   const mva           = cat['MVA (Material Value Add)'] || 0;
-  const amortization  = cat['Amortization'] || 0;
-  const packaging     = cat['Packaging'] || 0;
   const margin        = cat['Profit Margin'] || 0;
 
-  // Backward-compatible aggregate aliases for existing panels
   const mat = electronics + mechanical + finishing + heatingEngine + battery;
   const lab = mva;
   const ovh = 0;
 
-  return {
-    tree, fob, mat, lab, ovh, margin,
-    byCategory: cat
-  };
+  return { tree, fob, mat, lab, ovh, margin, byCategory: cat };
 }
 
 /* ============================================================
@@ -1320,7 +1344,6 @@ function buildNegotiationBrief(productId) {
   lines.push('');
   lines.push('2. Component sourcing (Electronics + Battery = ' + pctL(shouldCost ? ((c.byCategory['Electronics'] + c.byCategory['Battery']) / shouldCost) * 100 : 0, 5) + ' of FOB)');
   lines.push('   Battery cell and PCB controller are the two largest single-line drivers.');
-  lines.push('   Consolidating suppliers on these typically yields 3–8% FOB reduction.');
   lines.push('');
   lines.push('3. Finishing');
   lines.push('   Finishing (anodising, bead blast, laser, painting) is $' + (c.byCategory['Finishing'] || 0).toFixed(2) + '/unit.');
@@ -1332,7 +1355,6 @@ function buildNegotiationBrief(productId) {
   lines.push('');
   lines.push('5. Carbon & sustainability');
   lines.push('   Should-cost CO₂e per device: ' + carbon.totalCO2e.toFixed(3) + ' kg.');
-  lines.push('   Recycled aluminium and refurbished batteries reduce both cost and carbon.');
   lines.push('');
   lines.push('6. Top cost drivers (leaf level)');
   if (drivers.length) {
@@ -1482,7 +1504,7 @@ function renderTariffDeltaBadge() {
 }
 
 /* ============================================================
-   COMPETITIVE INTELLIGENCE (any-to-any with category breakdown)
+   COMPETITIVE INTELLIGENCE
    ============================================================ */
 
 function getComparePair() {
@@ -1707,7 +1729,6 @@ function renderCompareInsights() {
   const fobDeltaAbs = Math.abs(fobDelta);
   const fobDeltaPct = Math.min(ca.fob, cb.fob) ? (fobDeltaAbs / Math.min(ca.fob, cb.fob)) * 100 : 0;
 
-  // biggest category gap
   let biggest = { name: 'Electronics', a: 0, b: 0 };
   for (const catName of CATEGORY_ORDER) {
     const va = ca.byCategory[catName] || 0;
@@ -2576,7 +2597,6 @@ function renderDrilldown() {
   }
   if (chart) chart.destroy();
 
-  // New doughnut with category colours
   const labels = CATEGORY_ORDER.filter(cn => (c.byCategory[cn] || 0) > 0);
   const values = labels.map(cn => c.byCategory[cn]);
   const colors = labels.map(cn => CATEGORY_COLORS[cn]);
