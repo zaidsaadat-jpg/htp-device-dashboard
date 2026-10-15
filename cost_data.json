@@ -1,5 +1,5 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "last_updated": "2026-10-15",
   "currency": "USD",
   "category": "htp_devices",
@@ -432,11 +432,32 @@
 
   "competitors": {
     "benchmarks": {
-      "bat":  { "name": "British American Tobacco", "fy2025": { "netSalesM": 32800, "grossMarginPct": 0, "operatingMarginPct": 0, "ngpSharePct": 18 } },
-      "pmi":  { "name": "Philip Morris International", "fy2025": { "netSalesM": 38500, "grossMarginPct": 0, "operatingMarginPct": 0, "ngpSharePct": 40 } },
-      "jti":  { "name": "Japan Tobacco International", "fy2025": { "netSalesM": 21500, "grossMarginPct": 0, "operatingMarginPct": 0, "ngpSharePct": 12 } }
+      "bat":  { "name": "British American Tobacco", "fy2025": { "netSalesM": 32800, "ngpSharePct": 18 } },
+      "pmi":  { "name": "Philip Morris International", "fy2025": { "netSalesM": 38500, "ngpSharePct": 40 } },
+      "jti":  { "name": "Japan Tobacco International", "fy2025": { "netSalesM": 21500, "ngpSharePct": 12 } }
     },
     "notes": "Brand-level financials only. Product-level comparisons are handled by the any-to-any compare tab."
+  },
+
+  "forecasts": {
+    "baseMonth": "2026-10",
+    "horizon": 18,
+    "quarterLabels": ["Q4 2026", "Q1 2027", "Q2 2027", "Q3 2027", "Q4 2027", "Q1 2028"],
+    "drivers": [
+      { "id": "lithium_carbonate", "name": "Lithium Carbonate", "affects": { "type": "material", "key": "battery_perUnit" }, "source": "Benchmark Mineral Intelligence, Oct 2026", "citation": "Lithium prices stabilised after the 2024 trough; modest decline expected as new supply comes online through 2027.", "url": "https://www.benchmarkminerals.com", "quarterlyChange": [-0.6, -0.5, -0.4, -0.3, -0.2, -0.2] },
+      { "id": "copper_resistive", "name": "Copper (resistive heaters)", "affects": { "type": "material", "key": "heatingElement_resistive" }, "source": "World Bank Commodity Markets Outlook, Oct 2026", "citation": "Copper supported by electrification demand; projected +2 to +3% p.a. through 2028.", "url": "https://www.worldbank.org/en/research/commodity-markets", "quarterlyChange": [0.5, 0.6, 0.6, 0.5, 0.5, 0.5] },
+      { "id": "copper_induction", "name": "Copper (induction coils)", "affects": { "type": "material", "key": "heatingElement_induction" }, "source": "World Bank Commodity Markets Outlook, Oct 2026", "citation": "Same LME copper index applies.", "url": "", "quarterlyChange": [0.5, 0.6, 0.6, 0.5, 0.5, 0.5] },
+      { "id": "copper_external", "name": "Copper (external heaters)", "affects": { "type": "material", "key": "heatingElement_external" }, "source": "World Bank Commodity Markets Outlook, Oct 2026", "citation": "Same LME copper index applies.", "url": "", "quarterlyChange": [0.5, 0.6, 0.6, 0.5, 0.5, 0.5] },
+      { "id": "semiconductor_index", "name": "Semiconductor Index", "affects": { "type": "material", "key": "pcbController_perUnit" }, "source": "SIA / WSTS, Oct 2026", "citation": "MCU market normalising after the 2024 correction; stable pricing expected through 2027.", "url": "https://www.semiconductors.org", "quarterlyChange": [-0.3, -0.2, -0.2, -0.1, -0.1, -0.1] },
+      { "id": "display_amoled_index", "name": "AMOLED Panel Index", "affects": { "type": "material", "key": "display_amoled" }, "source": "DSCC, Sep 2026", "citation": "AMOLED costs declining steadily with Chinese capacity ramp.", "url": "https://www.displaysupplychain.com", "quarterlyChange": [-1.2, -1.0, -0.9, -0.8, -0.7, -0.6] },
+      { "id": "display_touch_index", "name": "Touchscreen Panel Index", "affects": { "type": "material", "key": "display_touchscreen" }, "source": "DSCC, Sep 2026", "citation": "Touchscreen modules follow the AMOLED trend.", "url": "", "quarterlyChange": [-1.0, -0.9, -0.8, -0.7, -0.6, -0.5] },
+      { "id": "aluminium_lme", "name": "Aluminium (LME)", "affects": { "type": "material", "key": "housing_aluminium" }, "source": "World Bank Commodity Markets Outlook, Oct 2026", "citation": "Aluminium supported by energy-transition demand; modest upward pressure.", "url": "", "quarterlyChange": [0.3, 0.3, 0.4, 0.3, 0.3, 0.3] },
+      { "id": "polymer_index", "name": "Engineering Polymer Index", "affects": { "type": "material", "key": "housing_plastic" }, "source": "ICIS, Oct 2026", "citation": "Polymer prices tracking crude; slight easing expected through 2027.", "url": "https://www.icis.com", "quarterlyChange": [-0.2, -0.2, -0.1, -0.1, -0.1, 0.0] },
+      { "id": "paper_pulp_index", "name": "Paper & Pulp Index", "affects": { "type": "material", "key": "packaging_perUnit" }, "source": "Fastmarkets, Oct 2026", "citation": "Packaging input costs stable to slightly rising.", "url": "", "quarterlyChange": [0.3, 0.4, 0.4, 0.3, 0.3, 0.3] },
+      { "id": "labour_china", "name": "China Labour Rate", "affects": { "type": "labour", "key": "china" }, "source": "China HR / SSB, Oct 2026", "citation": "Shenzhen electronics wages rising ~5 to 6% annually.", "url": "", "quarterlyChange": [1.3, 1.3, 1.4, 1.3, 1.3, 1.3] },
+      { "id": "labour_poland", "name": "Poland Labour Rate", "affects": { "type": "labour", "key": "poland" }, "source": "Eurostat / Polish GUS, Oct 2026", "citation": "Polish manufacturing wages rising 7 to 8% annually.", "url": "", "quarterlyChange": [1.8, 1.8, 1.9, 1.8, 1.8, 1.8] },
+      { "id": "labour_malaysia", "name": "Malaysia Labour Rate", "affects": { "type": "labour", "key": "malaysia" }, "source": "DOSM Malaysia, Oct 2026", "citation": "Malaysian electronics wages rising ~4% annually.", "url": "", "quarterlyChange": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0] }
+    ]
   },
 
   "endToEnd": {
