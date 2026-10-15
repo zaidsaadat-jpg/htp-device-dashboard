@@ -9,6 +9,10 @@
 <title>HTP Device Costing Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<link rel="stylesheet" href="dtc.css">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #222; }
@@ -29,7 +33,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 
-/* COMPANY ROWS (new dashboard) */
+/* COMPANY ROWS */
 .company-row { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 18px; box-shadow: 0 2px 8px rgba(0,0,0,.06); border-left: 5px solid #111; }
 .company-row[data-brand="BAT"] { border-left-color: #003087; }
 .company-row[data-brand="PMI"] { border-left-color: #C8102E; }
@@ -42,12 +46,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .company-selector select { padding: 10px 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; font-weight: 600; background: #fff; cursor: pointer; }
 .company-selector select:focus { outline: 2px solid #4a148c; outline-offset: 1px; border-color: #4a148c; }
 .company-summary { display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; align-items: start; }
-.company-cost-lines { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.company-cost-lines { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .company-cost-line { background: #f8fafc; border-radius: 8px; padding: 12px 14px; }
 .company-cost-line .lbl { font-size: 10px; text-transform: uppercase; color: #888; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 5px; }
-.company-cost-line .val { font-size: 16px; font-weight: 700; font-family: ui-monospace, monospace; }
+.company-cost-line .val { font-size: 15px; font-weight: 700; font-family: ui-monospace, monospace; }
 .company-cost-line.highlight { background: #111; color: #fff; }
 .company-cost-line.highlight .lbl { color: #aaa; }
+.company-cost-line.finishing { background: #f3e5f5; }
+.company-cost-line.finishing .lbl { color: #6a1b9a; }
 .company-meta { display: flex; flex-direction: column; gap: 0; }
 .company-meta-line { display: flex; justify-content: space-between; font-size: 13px; padding: 9px 0; border-bottom: 1px solid #f0f0f0; }
 .company-meta-line:last-of-type { border-bottom: none; }
@@ -60,12 +66,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 @media (max-width: 800px) {
   .company-summary { grid-template-columns: 1fr; }
   .company-selector { min-width: 100%; }
+  .company-cost-lines { grid-template-columns: repeat(2, 1fr); }
 }
 
 .drill { background: #fff; border-radius: 12px; padding: 24px; margin-top: 30px; box-shadow: 0 2px 8px rgba(0,0,0,.08); display: none; border-left: 5px solid #4a148c; }
 .drill.on { display: block; }
 .drill h3 { margin-bottom: 15px; }
-.chartbox { max-width: 380px; margin: 0 auto 25px; }
+.chartbox { max-width: 440px; margin: 0 auto 25px; }
 .section { margin-top: 30px; border-top: 1px solid #eee; padding-top: 25px; }
 .tree-controls { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; align-items: center; }
 .chart-btn { padding: 6px 14px; border: 1px solid #ddd; background: #fff; border-radius: 6px; cursor: pointer; font-size: 13px; }
@@ -310,6 +317,48 @@ td.lvl.L5 { color: #666; } td.lvl.L6, td.lvl.L7, td.lvl.L8, td.lvl.L9, td.lvl.L1
 .scenario-row:last-child { border-bottom: none; }
 .scenario-row input { padding: 6px 8px; border: 1px solid #d0d0d0; border-radius: 6px; font-size: 13px; width: 100%; }
 .scenario-row .note { font-size: 11px; color: #999; }
+.process-header { background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%); color: #fff; border-radius: 12px; padding: 25px; margin-bottom: 25px; }
+.process-header h3 { font-size: 20px; margin-bottom: 10px; }
+.process-header p { font-size: 13px; line-height: 1.6; opacity: 0.9; }
+.process-section { background: #fff; border-radius: 12px; padding: 22px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+.process-section h3 { font-size: 16px; color: #1b4332; margin-bottom: 6px; }
+.process-sub { font-size: 12px; color: #888; margin-bottom: 18px; }
+.stage-timeline { display: flex; gap: 0; overflow-x: auto; padding: 10px 4px 20px; }
+.stage-timeline::-webkit-scrollbar { height: 8px; }
+.stage-timeline::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+.stage-tile { flex: 0 0 170px; position: relative; padding: 16px 14px; border-radius: 10px; background: #f8fafc; border: 2px solid #e5e7eb; margin-right: 22px; transition: all 0.2s; }
+.stage-tile:hover { border-color: #40916c; transform: translateY(-2px); background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+.stage-tile .tile-icon { font-size: 26px; line-height: 1; }
+.stage-tile .tile-order { position: absolute; top: 10px; right: 12px; font-size: 10px; color: #888; font-weight: 700; background: #fff; padding: 2px 6px; border-radius: 10px; border: 1px solid #e5e7eb; }
+.stage-tile .tile-name { font-size: 13px; font-weight: 700; margin: 8px 0 6px; color: #1b4332; line-height: 1.3; min-height: 34px; }
+.stage-tile .tile-cost { font-size: 17px; font-weight: 800; color: #111; font-family: ui-monospace, monospace; }
+.stage-tile .tile-pct { font-size: 11px; color: #40916c; font-weight: 600; margin-top: 2px; }
+.stage-tile .tile-location { font-size: 10px; color: #888; margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb; line-height: 1.4; }
+.stage-tile .tile-cumulative { font-size: 10px; color: #666; margin-top: 4px; font-family: ui-monospace, monospace; }
+.stage-tile .arrow { position: absolute; right: -20px; top: 50%; transform: translateY(-50%); font-size: 22px; color: #40916c; z-index: 2; font-weight: 300; }
+.stage-tile:last-child .arrow { display: none; }
+.stage-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; margin-top: 10px; }
+.stage-card { background: #f8fafc; border-radius: 10px; padding: 18px; border-left: 4px solid #40916c; cursor: pointer; transition: all 0.15s; }
+.stage-card:hover { background: #f0fdf4; }
+.stage-card.expanded { background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+.stage-card .card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.stage-card .card-icon { font-size: 30px; line-height: 1; }
+.stage-card .card-name { font-size: 15px; font-weight: 700; color: #1b4332; line-height: 1.3; }
+.stage-card .card-order { font-size: 10px; color: #888; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+.stage-card .card-cost-line { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; border-bottom: 1px solid #e5e7eb; }
+.stage-card .card-cost-line:last-child { border-bottom: none; }
+.stage-card .card-cost-line .lbl { color: #666; }
+.stage-card .card-cost-line .val { font-weight: 700; font-family: ui-monospace, monospace; text-align: right; }
+.stage-card .card-details { display: none; margin-top: 14px; padding-top: 14px; border-top: 1px dashed #d1d5db; }
+.stage-card.expanded .card-details { display: block; }
+.stage-card .detail-section { margin-bottom: 14px; }
+.stage-card .detail-section:last-child { margin-bottom: 0; }
+.stage-card .detail-label { font-size: 11px; text-transform: uppercase; color: #888; letter-spacing: 0.5px; font-weight: 700; margin-bottom: 6px; }
+.stage-card .detail-text { font-size: 12.5px; color: #444; line-height: 1.55; }
+.stage-card .driver-list, .stage-card .input-list, .stage-card .output-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.stage-card .driver-pill { background: #fef3c7; color: #92400e; font-size: 11px; padding: 3px 9px; border-radius: 12px; font-weight: 500; }
+.stage-card .input-pill { background: #dbeafe; color: #1e40af; font-size: 11px; padding: 3px 9px; border-radius: 12px; font-weight: 500; }
+.stage-card .output-pill { background: #d1fae5; color: #065f46; font-size: 11px; padding: 3px 9px; border-radius: 12px; font-weight: 500; }
 :focus-visible { outline: 2px solid #4a148c; outline-offset: 2px; border-radius: 4px; }
 .tab:focus-visible, .chart-btn:focus-visible, .loc-tab:focus-visible { outline: 2px solid #fff; outline-offset: -2px; }
 @media (prefers-reduced-motion: reduce) {
@@ -358,7 +407,9 @@ td.lvl.L5 { color: #666; } td.lvl.L6, td.lvl.L7, td.lvl.L8, td.lvl.L9, td.lvl.L1
     <button class="tab" onclick="showTab('negotiation', this)">💰 Negotiation</button>
     <button class="tab" onclick="showTab('forecast', this)">📈 Budgeting & Forecasting</button>
     <button class="tab" onclick="showTab('competitive', this)">🏆 Competitive Intelligence</button>
+    <button class="tab" onclick="showTab('process', this)">🔧 Process Flow</button>
     <button class="tab" onclick="showTab('e2e', this)">🌐 End-to-End</button>
+    <button class="tab" onclick="showTab('dtc', this)">🎨 Design-to-Cost</button>
   </div>
 </div>
 
@@ -366,7 +417,7 @@ td.lvl.L5 { color: #666; } td.lvl.L6, td.lvl.L7, td.lvl.L8, td.lvl.L9, td.lvl.L1
   <div class="tab-panel active" id="tab-dashboard">
     <div style="background: #e8f5e9; border-left: 4px solid #2d6a4f; padding: 12px 18px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; color: #333; display: flex; align-items: center; gap: 10px;">
       <span style="font-size: 18px;">💡</span>
-      <span><strong>Pick a device from any company below</strong> to see its live cost summary, then click <strong>Deep dive</strong> to open the full cost tree, MOQ sensitivity, and detailed cost table.</span>
+      <span><strong>Pick a device from any company below</strong> to see its live cost summary with the new category breakdown (Electronics, Mechanical, Finishing, Heating, Battery, MVA, Amortization, Packaging, Margin), then click <strong>Deep dive</strong> for the full cost tree and MOQ sensitivity.</span>
     </div>
     <div id="companyRows"></div>
     <div class="drill" id="drill">
@@ -417,10 +468,10 @@ td.lvl.L5 { color: #666; } td.lvl.L6, td.lvl.L7, td.lvl.L8, td.lvl.L9, td.lvl.L1
     </div>
     <div class="assumption-group"><h3>🌍 Location Rates</h3><div class="loc-tabs" id="locTabs"></div><div id="locEditor"></div></div>
     <div class="assumption-group"><h3>💵 Material Prices</h3><div id="materialEditor"></div></div>
-    <div class="assumption-group"><h3>🏭 Machine Assumptions</h3><div id="machineEditor"></div></div>
+    <div class="assumption-group"><h3>🏭 Machine Assumptions (incl. finishing equipment)</h3><div id="machineEditor"></div></div>
     <div class="assumption-group">
       <h3>🔄 Live Input-Cost Feeds</h3>
-      <p class="feed-help">Configure a URL per material to fetch live prices. Leave blank to use the static price from <code>cost_data.json</code>. The fetcher expects a JSON endpoint; use <code>path</code> to point to the number (e.g. <code>data.battery.liion</code>), and <code>transform</code> to rescale (<code>divideBy1000</code>, <code>divideBy100</code>, or blank).</p>
+      <p class="feed-help">Configure a URL per material to fetch live prices. Leave blank to use the static price from <code>cost_data.json</code>. The fetcher expects a JSON endpoint; use <code>path</code> to point to the number, and <code>transform</code> to rescale (<code>divideBy1000</code>, <code>divideBy100</code>, or blank).</p>
       <div class="feed-actions">
         <button class="btn-primary" onclick="refreshFeeds()">🔄 Refresh all feeds</button>
         <button class="btn-secondary" onclick="clearFeedCache()">🧹 Clear cache</button>
@@ -453,15 +504,13 @@ td.lvl.L5 { color: #666; } td.lvl.L6, td.lvl.L7, td.lvl.L8, td.lvl.L9, td.lvl.L1
   <div class="tab-panel" id="tab-negotiation">
     <div class="neg-header">
       <h3>💰 Negotiation &amp; Should-Cost</h3>
-      <p>Enter the supplier's quoted FOB for each device. The model compares it against a bottom-up should-cost and produces a one-page negotiation brief you can paste into an email. Quotes are stored locally and reflect the current manufacturing location, tier, and material assumptions.</p>
+      <p>Enter the supplier's quoted FOB for each device. The model compares it against a bottom-up should-cost and produces a one-page negotiation brief you can paste into an email.</p>
     </div>
     <div class="neg-actions">
       <button class="btn-primary" onclick="openAllBriefs()">📄 Generate brief for all devices</button>
       <button class="btn-secondary" onclick="resetQuotes()">↺ Clear all quotes</button>
     </div>
-    <div class="neg-table-wrap">
-      <table class="neg-table" id="negTable"></table>
-    </div>
+    <div class="neg-table-wrap"><table class="neg-table" id="negTable"></table></div>
     <div class="neg-brief-wrap" id="negBriefWrap" style="display:none;">
       <div class="neg-brief-header">
         <h4 id="negBriefTitle">Negotiation brief</h4>
@@ -506,8 +555,8 @@ td.lvl.L5 { color: #666; } td.lvl.L6, td.lvl.L7, td.lvl.L8, td.lvl.L9, td.lvl.L1
       <div id="compareTable"></div>
     </div>
     <div class="comp-section">
-      <h3>📊 Cost structure comparison</h3>
-      <div style="height: 340px; position: relative;"><canvas id="compareChart"></canvas></div>
+      <h3>📊 Cost category comparison</h3>
+      <div style="height: 400px; position: relative;"><canvas id="compareChart"></canvas></div>
     </div>
     <div class="comp-section">
       <h3>💡 Insights</h3>
@@ -519,10 +568,27 @@ td.lvl.L5 { color: #666; } td.lvl.L6, td.lvl.L7, td.lvl.L8, td.lvl.L9, td.lvl.L1
     </div>
   </div>
 
+  <div class="tab-panel" id="tab-process">
+    <div class="process-header">
+      <h3 id="processTitle">🔧 End-to-End Manufacturing Process Flow</h3>
+      <p>How an HTP device is made — from raw component sourcing to factory gate. Finishing (anodizing, bead blasting, laser engraving, painting) is now a dedicated stage.</p>
+    </div>
+    <div class="process-section">
+      <h3>Process timeline</h3>
+      <p class="process-sub">The physical journey of an HTP device. Costs scale with the currently-selected device's FOB.</p>
+      <div class="stage-timeline" id="stageTimeline"></div>
+    </div>
+    <div class="process-section">
+      <h3>Stage detail cards</h3>
+      <p class="process-sub">Click any card to expand and see the process steps, cost drivers, inputs and outputs.</p>
+      <div class="stage-cards" id="stageCards"></div>
+    </div>
+  </div>
+
   <div class="tab-panel" id="tab-e2e">
     <div class="e2e-header">
       <h3>🌐 End-to-End Landed Cost — Factory to Consumer</h3>
-      <p>Full cost journey from manufacturing gate through freight, insurance, customs, inland distribution, wholesale markup, and retail VAT. HTP devices are classified as consumer electronics — zero import tariff in most developed markets, but VAT varies significantly by destination.</p>
+      <p>Full cost journey from manufacturing gate through freight, insurance, customs, inland distribution, wholesale markup, and retail VAT.</p>
     </div>
     <h3 style="margin-bottom:12px;">Manufacturing Locations</h3>
     <div class="source-legend" id="sourceLegend"></div>
@@ -530,7 +596,7 @@ td.lvl.L5 { color: #666; } td.lvl.L6, td.lvl.L7, td.lvl.L8, td.lvl.L9, td.lvl.L1
     <div class="dest-legend" id="destLegend"></div>
     <div class="tariff-section" id="tariffSection">
       <h3>Tariff Simulator <span id="tariffDeltaBadge" class="tariff-badge" style="display:none;"></span></h3>
-      <p class="tariff-sub">Devices currently ship duty-free in most developed markets. Drag any slider to simulate a tariff regime change — every downstream chart updates immediately.</p>
+      <p class="tariff-sub">Devices currently ship duty-free in most developed markets. Drag any slider to simulate a tariff regime change.</p>
       <div id="tariffSimBody"></div>
       <div class="tariff-actions">
         <button class="btn-secondary" onclick="resetTariffs()">↺ Reset tariffs to defaults</button>
@@ -538,7 +604,7 @@ td.lvl.L5 { color: #666; } td.lvl.L6, td.lvl.L7, td.lvl.L8, td.lvl.L9, td.lvl.L1
     </div>
     <div class="carbon-section" id="carbonSection">
       <h3>🌱 Carbon footprint &amp; EU carbon cost</h3>
-      <p class="carbon-sub">CO₂e per device is computed from the BOM (material CO₂e factors) plus a manufacturing energy allowance. EU destinations get a carbon cost line, sized by CBAM phase-in for the selected year. Devices are <strong>not currently in CBAM scope</strong>; this models an indicative scope-3 exposure.</p>
+      <p class="carbon-sub">CO₂e per device computed from BOM material CO₂e factors plus a manufacturing energy allowance.</p>
       <div class="carbon-controls">
         <label>CBAM phase-in year:</label>
         <select id="cbamYearSelect" onchange="onCbamYearChange()">
@@ -574,6 +640,115 @@ td.lvl.L5 { color: #666; } td.lvl.L6, td.lvl.L7, td.lvl.L8, td.lvl.L9, td.lvl.L1
       <div style="height:360px;"><canvas id="retailByMarketChart"></canvas></div>
     </div>
   </div>
+
+  <div class="tab-panel" id="tab-dtc">
+    <div class="dtc-header">
+      <h3>🎨 Design-to-Cost &amp; Value Engineering</h3>
+      <p>Cross-functional decision workspace for Design, Procurement, Costing, and Engineering. Adjust the levers below to see live cost and value impact.</p>
+    </div>
+    <div class="dtc-layout">
+      <div class="dtc-viewer-card">
+        <h4>Device Archetype Viewer</h4>
+        <div class="dtc-upload-zone" id="glbUploadZone">
+          <div class="icon">📦</div>
+          <p><strong>Upload 3D model</strong> (.glb or .gltf)</p>
+          <p style="font-size:11px;">Drag &amp; drop the file here, or click to browse</p>
+          <input type="file" id="glbInput" style="display:none" accept=".glb,.gltf">
+          <div class="upload-progress" id="uploadProgress" style="display:none;">
+            <div class="progress-track"><div class="progress-fill" id="uploadProgressFill"></div></div>
+            <div class="progress-text">
+              <span id="uploadProgressText">Preparing…</span>
+              <span class="eta" id="uploadProgressEta"></span>
+            </div>
+          </div>
+        </div>
+        <div id="viewer3d" class="viewer3d"></div>
+        <p class="viewer-hint" id="viewerHint">🖱️ Drag to rotate · Scroll to zoom · Right-click drag to pan</p>
+        <div class="cad-controls">
+          <div class="cad-control-group">
+            <span class="cad-label">Archetype:</span>
+            <div class="cad-chips" id="archetypeChips">
+              <button class="cad-chip active" data-id="two-piece" onclick="setArchetype('two-piece')">🔲 Two-piece</button>
+              <button class="cad-chip" data-id="all-in-one" onclick="setArchetype('all-in-one')">📱 All-in-one</button>
+              <button class="cad-chip" data-id="pocket-charger" onclick="setArchetype('pocket-charger')">🔌 Pocket charger</button>
+              <button class="cad-chip" data-id="holder" onclick="setArchetype('holder')">📎 Holder</button>
+            </div>
+          </div>
+          <div class="cad-control-group">
+            <span class="cad-label">View:</span>
+            <div class="cad-chips" id="viewChips">
+              <button class="cad-chip active" data-id="solid" onclick="setViewMode('solid')">Solid</button>
+              <button class="cad-chip" data-id="technical" onclick="setViewMode('technical')">Technical</button>
+              <button class="cad-chip" data-id="wireframe" onclick="setViewMode('wireframe')">Wireframe</button>
+            </div>
+          </div>
+          <div class="cad-control-group">
+            <span class="cad-label">Projection:</span>
+            <div class="cad-chips" id="projectionChips">
+              <button class="cad-chip active" data-id="perspective" onclick="setProjection('perspective')">Perspective</button>
+              <button class="cad-chip" data-id="orthographic" onclick="setProjection('orthographic')">Orthographic</button>
+            </div>
+          </div>
+          <div class="cad-control-group">
+            <span class="cad-label">Material:</span>
+            <div class="cad-chips" id="materialChips">
+              <button class="cad-chip active" data-id="matte" onclick="setMaterialPreset('matte')">Matte</button>
+              <button class="cad-chip" data-id="gloss" onclick="setMaterialPreset('gloss')">Gloss</button>
+              <button class="cad-chip" data-id="metal" onclick="setMaterialPreset('metal')">Metal</button>
+              <button class="cad-chip" data-id="fabric" onclick="setMaterialPreset('fabric')">Fabric</button>
+            </div>
+          </div>
+          <div class="cad-control-group">
+            <span class="cad-label">Views:</span>
+            <div class="cad-chips">
+              <button class="cad-chip" onclick="setViewPreset('front')">Front</button>
+              <button class="cad-chip" onclick="setViewPreset('side')">Side</button>
+              <button class="cad-chip" onclick="setViewPreset('top')">Top</button>
+              <button class="cad-chip" onclick="setViewPreset('iso')">Isometric</button>
+            </div>
+          </div>
+          <div class="cad-control-group">
+            <span class="cad-label">Colour:</span>
+            <input type="color" id="meshColor" value="#4a148c" onchange="setBaseColor(this.value)">
+          </div>
+          <div class="cad-control-group">
+            <span class="cad-label">Custom model:</span>
+            <button class="cad-chip" onclick="resetToBuiltIn()">↺ Reset to built-in</button>
+          </div>
+        </div>
+      </div>
+      <div class="dtc-levers-card">
+        <h4>Optimization Levers</h4>
+        <p class="dtc-subtitle">Live impact of each lever on the selected device's cost</p>
+        <div id="leversPanel"></div>
+        <div class="dtc-impact-panel">
+          <div class="impact-row"><span class="impact-label">Baseline FOB</span><span class="impact-value" id="dtcBaseFob">—</span></div>
+          <div class="impact-row"><span class="impact-label">Current FOB (with levers)</span><span class="impact-value highlight" id="dtcCurrentFob">—</span></div>
+          <div class="impact-row"><span class="impact-label">Delta vs Baseline</span><span class="impact-value delta" id="dtcDelta">—</span></div>
+          <div class="impact-row"><span class="impact-label">Landed Cost @ MOQ</span><span class="impact-value" id="dtcLanded">—</span></div>
+          <div class="impact-row"><span class="impact-label">Value Score</span><span class="impact-value" id="dtcValueScore">—</span></div>
+        </div>
+        <div class="dtc-actions">
+          <button class="btn-primary" onclick="resetLevers()">↺ Reset to Baseline</button>
+          <button class="btn-secondary" onclick="applyLeanScenario()">💰 Auto-Optimize for Cost</button>
+          <button class="btn-secondary" onclick="applyPremiumScenario()">✨ Auto-Optimize for Value</button>
+        </div>
+      </div>
+    </div>
+    <div class="dtc-section">
+      <h3>Value Engineering Matrix</h3>
+      <p class="dtc-subtitle">Cost impact (X-axis) vs Value impact (Y-axis). Larger bubbles = currently selected options.</p>
+      <div class="dtc-matrix-wrap"><canvas id="valueMatrixChart"></canvas></div>
+    </div>
+    <div class="dtc-section">
+      <h3>Cross-Functional Action Board</h3>
+      <div class="action-grid" id="actionBoard"></div>
+    </div>
+    <div class="dtc-section">
+      <h3>Scenario Comparison</h3>
+      <div class="scenario-compare" id="scenarioCompare"></div>
+    </div>
+  </div>
 </div>
 
 <div class="footer">Estimates based on industry benchmarks, teardown analyses, and published disclosures. Not actual manufacturer data.</div>
@@ -586,6 +761,42 @@ const FEED_CACHE_KEY = 'htp_feed_cache_v1';
 const FEED_CONFIG_KEY = 'htp_feed_config_v1';
 const FEED_TTL_MS = 6 * 60 * 60 * 1000;
 const FC_STORAGE = 'htp_cost_forecast_overrides_v1';
+
+const CATEGORY_ORDER = [
+  'Electronics',
+  'Mechanical',
+  'Finishing',
+  'Heating Engine',
+  'Battery',
+  'MVA (Material Value Add)',
+  'Amortization',
+  'Packaging',
+  'Profit Margin'
+];
+
+const CATEGORY_COLORS = {
+  'Electronics': '#283593',
+  'Mechanical': '#111111',
+  'Finishing': '#6a1b9a',
+  'Heating Engine': '#c62828',
+  'Battery': '#2d6a4f',
+  'MVA (Material Value Add)': '#f57c00',
+  'Amortization': '#78909c',
+  'Packaging': '#8d6e63',
+  'Profit Margin': '#ffd54f'
+};
+
+const CATEGORY_SHORT = {
+  'Electronics': 'Electronics',
+  'Mechanical': 'Mechanical',
+  'Finishing': 'Finishing',
+  'Heating Engine': 'Heating',
+  'Battery': 'Battery',
+  'MVA (Material Value Add)': 'MVA',
+  'Amortization': 'Amortization',
+  'Packaging': 'Packaging',
+  'Profit Margin': 'Margin'
+};
 
 let data = null, originalAssumptions = null, originalTradeRules = null;
 let selected = null, chart = null, moqChart = null;
@@ -630,6 +841,88 @@ function escapeHtml(s) {
 }
 
 /* ============================================================
+   COST ENGINE (v3.0 — category aware)
+   ============================================================ */
+
+function getTierMultipliers() {
+  const tier = data.assumptions.supplierTiers[currentTier];
+  return tier || { laborMultiplier: 1, machineMultiplier: 1, overheadMultiplier: 1, moqMultiplier: 1, marginPercent: 12 };
+}
+function machineRatePerHr(machineKey) {
+  const m = data.assumptions.machineAssumptions[machineKey];
+  if (!m) return currentLocation.machineRatePerHr;
+  const depreciation = m.capitalCost / (m.lifeYears * m.operatingHoursPerYear);
+  const maintenance = depreciation * (m.maintenancePercentOfDep / 100);
+  return (depreciation + maintenance + m.powerCostPerHr) * getTierMultipliers().machineMultiplier;
+}
+function evaluateNode(node, loc, matPrices) {
+  if (node.children && node.children.length > 0 && !node.type) return node.children.reduce((s, c) => s + evaluateNode(c, loc, matPrices), 0);
+  const t = getTierMultipliers();
+  switch (node.type) {
+    case 'time_labour': return (node.inputs.minutesPerUnit / 60) * loc.laborRatePerHr * t.laborMultiplier;
+    case 'labour_rate': return 0;
+    case 'machine_rate': return 0;
+    case 'time_machine': return (node.inputs.minutesPerUnit / 60) * machineRatePerHr(node.inputs.machineKey);
+    case 'overhead': return (node.inputs.minutesPerUnit / 60) * loc.overheadRatePerHr * t.overheadMultiplier;
+    case 'material': {
+      const e = matPrices[node.inputs.priceKey];
+      const price = e ? (typeof e === 'object' ? e.price : e) : 0;
+      return node.inputs.quantity * price;
+    }
+    case 'fixed_amortised': return node.inputs.mouldCost / node.inputs.lifecycleUnits;
+    case 'percent_of_subtotal': return 0;
+    default: return node.cost || 0;
+  }
+}
+function evaluateTree(node, loc, matPrices, path) {
+  const newPath = path ? path + '/' + node.name : node.name;
+  const newNode = { ...node, _path: newPath };
+  if (node.children && node.children.length > 0 && !node.type) {
+    newNode.children = node.children.map(c => evaluateTree(c, loc, matPrices, newPath));
+    const subtotal = newNode.children.filter(c => c.type !== 'percent_of_subtotal').reduce((s, c) => s + c.cost, 0);
+    newNode.children = newNode.children.map(c => {
+      if (c.type === 'percent_of_subtotal') return { ...c, cost: subtotal * (c.inputs.percent / 100) };
+      return c;
+    });
+    newNode.cost = newNode.children.reduce((s, c) => s + c.cost, 0);
+  } else { newNode.cost = evaluateNode(node, loc, matPrices); }
+  return newNode;
+}
+function totalOf(node) { if (typeof node.cost === 'number') return node.cost; return (node.children || []).reduce((s, c) => s + totalOf(c), 0); }
+
+/* v3.0 — calc now returns a category map plus backward-compatible aliases */
+function calc(p, locOverride, matOverride) {
+  const loc = locOverride || currentLocation || data.assumptions.locations[0];
+  const mats = matOverride || data.assumptions.materialPrices;
+  const tree = evaluateTree(p.costTree, loc, mats, '');
+  const fob = tree.cost;
+
+  const findTop = n => tree.children.find(c => c.name === n);
+  const cat = {};
+  CATEGORY_ORDER.forEach(name => { cat[name] = (findTop(name) || {}).cost || 0; });
+
+  const electronics   = cat['Electronics'] || 0;
+  const mechanical    = cat['Mechanical'] || 0;
+  const finishing     = cat['Finishing'] || 0;
+  const heatingEngine = cat['Heating Engine'] || 0;
+  const battery       = cat['Battery'] || 0;
+  const mva           = cat['MVA (Material Value Add)'] || 0;
+  const amortization  = cat['Amortization'] || 0;
+  const packaging     = cat['Packaging'] || 0;
+  const margin        = cat['Profit Margin'] || 0;
+
+  // Backward-compatible aggregate aliases for existing panels
+  const mat = electronics + mechanical + finishing + heatingEngine + battery;
+  const lab = mva;
+  const ovh = 0;
+
+  return {
+    tree, fob, mat, lab, ovh, margin,
+    byCategory: cat
+  };
+}
+
+/* ============================================================
    FEEDS
    ============================================================ */
 
@@ -661,6 +954,7 @@ async function refreshFeeds() {
   const now = Date.now();
   let anyConfigured = false;
   for (const [key, entry] of Object.entries(mats)) {
+    if (String(key).startsWith('_comment')) continue;
     const cfg = getMaterialFeed(key);
     if (!cfg || !cfg.url) { feedState.static++; continue; }
     anyConfigured = true;
@@ -699,6 +993,7 @@ function renderFeedBadge() {
   const btn = document.getElementById('feedRefreshBtn');
   if (!badge) return;
   const configured = Object.keys(data && data.assumptions && data.assumptions.materialPrices || {})
+    .filter(k => !String(k).startsWith('_comment'))
     .filter(k => { const c = getMaterialFeed(k); return c && c.url; }).length;
   btn.style.display = configured > 0 ? 'inline-block' : 'none';
   badge.className = 'feed-badge';
@@ -724,6 +1019,7 @@ function renderFeedsEditor() {
   let configured = 0, cached = 0;
   let h = '';
   for (const [key, entry] of Object.entries(data.assumptions.materialPrices)) {
+    if (String(key).startsWith('_comment')) continue;
     const cfg = getMaterialFeed(key);
     const co2e = (typeof entry === 'object' && entry.co2ePerKg != null) ? entry.co2ePerKg : '—';
     const price = typeof entry === 'object' ? entry.price : entry;
@@ -820,7 +1116,7 @@ function renderCarbonSection() {
   + '<div class="carbon-stat"><div class="lbl">Carbon cost / device to EU</div><div class="val">$' + avgCost.toFixed(4) + '</div></div>';
   if (noteEl) {
     const atFull = avgCO2e * (ets / 1000);
-    noteEl.innerHTML = 'At the selected ' + yr + ' phase-in (' + phasePct + '%), the carbon cost per device averages <strong>$' + avgCost.toFixed(4) + '</strong> for EU-bound shipments. At full phase-in (2034), the same figure rises to <strong>$' + atFull.toFixed(4) + '</strong> per device. Devices are not currently in CBAM scope, but the EU has signalled intent to extend the mechanism to downstream electronics — this section models the potential exposure.';
+    noteEl.innerHTML = 'At the selected ' + yr + ' phase-in (' + phasePct + '%), the carbon cost per device averages <strong>$' + avgCost.toFixed(4) + '</strong> for EU-bound shipments. At full phase-in (2034), the same figure rises to <strong>$' + atFull.toFixed(4) + '</strong> per device.';
   }
   const ctx = document.getElementById('carbonChart'); if (!ctx) return;
   if (carbonChart) { try { carbonChart.destroy(); } catch(e){} }
@@ -831,11 +1127,7 @@ function renderCarbonSection() {
       { label: 'Carbon cost @ ' + yr + ' ($)', data: perProduct.map(x => x.cost), backgroundColor: '#86efac', borderRadius: 6, yAxisID: 'y1' }
     ]},
     options: { responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
-        tooltip: { callbacks: { label: function(ctx) {
-          if (ctx.datasetIndex === 0) return ctx.dataset.label + ': ' + Number(ctx.raw).toFixed(3);
-          return ctx.dataset.label + ': $' + Number(ctx.raw).toFixed(4);
-        }}}},
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }},
       scales: {
         y: { beginAtZero: true, title: { display: true, text: 'kgCO₂e / device' }, position: 'left' },
         y1: { beginAtZero: true, title: { display: true, text: '$ / device' }, position: 'right', grid: { drawOnChartArea: false } }
@@ -864,12 +1156,11 @@ function renderNegotiationTab() {
     const effective = quoted != null ? quoted : shouldCost;
     const gap = effective - shouldCost;
     const gapPct = shouldCost ? (gap / shouldCost) * 100 : 0;
-    const cls = classifyGap(gapPct);
-    const tag = gapTag(cls);
+    const tag = gapTag(classifyGap(gapPct));
     h += '<tr>'
       + '<td><div class="neg-prod">' + escapeHtml(p.name) + '</div><div class="neg-sub">' + escapeHtml((p.brand || '') + ' · ' + (p.category || '') + ' · ' + (currentLocation ? currentLocation.name : '')) + '</div></td>'
       + '<td class="num">' + fmt(shouldCost) + '</td>'
-      + '<td class="num"><input type="number" step="0.05" class="neg-quote-input" value="' + effective.toFixed(2) + '" data-product="' + p.id + '" aria-label="Quoted FOB for ' + escapeHtml(p.name) + '" oninput="onQuoteChange(this)" onchange="onQuoteChange(this)"></td>'
+      + '<td class="num"><input type="number" step="0.05" class="neg-quote-input" value="' + effective.toFixed(2) + '" data-product="' + p.id + '" oninput="onQuoteChange(this)" onchange="onQuoteChange(this)"></td>'
       + '<td class="num ' + (gap > 0.005 ? 'neg-delta-up' : (gap < -0.005 ? 'neg-delta-down' : 'neg-delta-zero')) + '" data-gap-for="' + p.id + '">' + (gap > 0.005 ? '+' : '') + fmt(gap) + '</td>'
       + '<td class="num ' + (gap > 0.005 ? 'neg-delta-up' : (gap < -0.005 ? 'neg-delta-down' : 'neg-delta-zero')) + '" data-gappct-for="' + p.id + '">' + (gap > 0.005 ? '+' : '') + gapPct.toFixed(1) + '%</td>'
       + '<td><span class="neg-status ' + tag.cls + '" data-status-for="' + p.id + '">' + tag.label + '</span></td>'
@@ -975,7 +1266,7 @@ function buildNegotiationBrief(productId) {
   const fixedPerUnit = moqCurrent ? fixedPool / moqCurrent : 0;
   const target50 = shouldCost + gap * 0.5;
   const walkAway = shouldCost * 1.10;
-  const drivers = getTopCostDrivers(c.tree, 5);
+  const drivers = getTopCostDrivers(c.tree, 8);
   const carbon = calcCarbon(p);
   const carbonCostEU = getCarbonCostPerUnit(carbon.totalCO2e, true);
   const retail = p.retailPrice || 0;
@@ -987,6 +1278,7 @@ function buildNegotiationBrief(productId) {
   lines.push('Device:       ' + p.name);
   lines.push('Brand:        ' + (p.brand || '—') + ' · ' + (p.category || '—'));
   lines.push('Manufactured: ' + loc.name + ' · ' + tier.name);
+  if (p.annualVolume) lines.push('Annual volume: ' + p.annualVolume.toLocaleString() + ' units');
   lines.push('Prepared:     ' + new Date().toISOString().slice(0, 16).replace('T', ' '));
   lines.push('');
   lines.push('── POSITION ' + L.slice(0, 44));
@@ -998,18 +1290,19 @@ function buildNegotiationBrief(productId) {
   lines.push('');
   lines.push('Status: ' + tag.label.toUpperCase());
   lines.push('');
-  lines.push('── COST BREAKDOWN (should-cost) ' + L.slice(0, 28));
-  lines.push(padR('Materials', 34) + moneyL(c.mat, 10) + '  ' + pctL(shouldCost ? (c.mat / shouldCost) * 100 : 0, 6));
-  lines.push(padR('Labour (CMT)', 34) + moneyL(c.lab, 10) + '  ' + pctL(shouldCost ? (c.lab / shouldCost) * 100 : 0, 6));
-  lines.push(padR('Overheads', 34) + moneyL(c.ovh, 10) + '  ' + pctL(shouldCost ? (c.ovh / shouldCost) * 100 : 0, 6));
-  lines.push(padR('Factory margin (' + (tier.marginPercent != null ? tier.marginPercent.toFixed(1) : '12.0') + '%)', 34) + moneyL(c.margin, 10) + '  ' + pctL(shouldCost ? (c.margin / shouldCost) * 100 : 0, 6));
+  lines.push('── COST BREAKDOWN BY CATEGORY ' + L.slice(0, 27));
+  CATEGORY_ORDER.forEach(catName => {
+    const val = c.byCategory[catName] || 0;
+    if (val === 0) return;
+    lines.push(padR(catName, 34) + moneyL(val, 10) + '  ' + pctL(shouldCost ? (val / shouldCost) * 100 : 0, 6));
+  });
   lines.push('');
   lines.push(padR('Fixed cost pool (MOQ ' + moqCurrent.toLocaleString() + ')', 34) + padL('$' + fixedPool.toLocaleString(), 10));
   lines.push(padR('Fixed cost / unit at current MOQ', 34) + moneyL(fixedPerUnit, 10));
   lines.push('');
   lines.push('── CARBON ' + L.slice(0, 46));
   lines.push(padR('CO₂e per device (materials + mfg)', 34) + padL(carbon.totalCO2e.toFixed(3) + ' kg', 10));
-  lines.push(padR('EU carbon cost per device (' + (data.endToEnd.tradeRules.carbonRules.currentYear) + ')', 34) + padL('$' + carbonCostEU.toFixed(4), 10));
+  lines.push(padR('EU carbon cost per device (' + data.endToEnd.tradeRules.carbonRules.currentYear + ')', 34) + padL('$' + carbonCostEU.toFixed(4), 10));
   lines.push('');
   lines.push('── TARGET ' + L.slice(0, 46));
   lines.push('Recommended target ask (50% gap close):   ' + moneyL(target50, 10));
@@ -1023,39 +1316,37 @@ function buildNegotiationBrief(productId) {
     const doubledFixed = fixedPool / doubledMoq;
     lines.push('   Doubling the order to ' + doubledMoq.toLocaleString() + ' units reduces fixed cost');
     lines.push('   per unit from ' + money(fixedPerUnit) + ' to ' + money(doubledFixed) + ' — a saving of ' + money(fixedPerUnit - doubledFixed) + '/unit.');
-    lines.push('   Even splitting the gain, this justifies a meaningful FOB concession.');
-  } else {
-    lines.push('   No MOQ fixed pool modelled for this SKU.');
   }
   lines.push('');
-  lines.push('2. Component sourcing');
-  lines.push('   Battery, PCB, and heating element are the three largest cost drivers.');
-  lines.push('   Consolidating suppliers on these components typically yields 3–8% FOB reduction.');
+  lines.push('2. Component sourcing (Electronics + Battery = ' + pctL(shouldCost ? ((c.byCategory['Electronics'] + c.byCategory['Battery']) / shouldCost) * 100 : 0, 5) + ' of FOB)');
+  lines.push('   Battery cell and PCB controller are the two largest single-line drivers.');
+  lines.push('   Consolidating suppliers on these typically yields 3–8% FOB reduction.');
   lines.push('');
-  lines.push('3. Manufacturing footprint');
+  lines.push('3. Finishing');
+  lines.push('   Finishing (anodising, bead blast, laser, painting) is $' + (c.byCategory['Finishing'] || 0).toFixed(2) + '/unit.');
+  lines.push('   Moving to a lower-cost finishing supplier in the same region can save 15–25%.');
+  lines.push('');
+  lines.push('4. Manufacturing footprint');
   lines.push('   Current assumed location: ' + loc.name + '.');
-  lines.push('   Shifting to a lower-cost location (e.g. China, Malaysia) can reduce labour cost');
-  lines.push('   by 30–50%, but adds freight and may affect regulatory clearance.');
+  lines.push('   Shifting to China or Malaysia can reduce labour cost by 30–50%.');
   lines.push('');
-  lines.push('4. Carbon & sustainability');
+  lines.push('5. Carbon & sustainability');
   lines.push('   Should-cost CO₂e per device: ' + carbon.totalCO2e.toFixed(3) + ' kg.');
-  lines.push('   At CBAM phase-in year ' + data.endToEnd.tradeRules.carbonRules.currentYear + ', EU-bound shipments carry a carbon cost of $' + carbonCostEU.toFixed(4) + '/device.');
   lines.push('   Recycled aluminium and refurbished batteries reduce both cost and carbon.');
   lines.push('');
-  lines.push('5. Top cost drivers (where to focus the conversation)');
+  lines.push('6. Top cost drivers (leaf level)');
   if (drivers.length) {
     drivers.forEach((d, i) => {
       const label = (d.parent ? d.parent + ' → ' + d.name : d.name);
       lines.push('   ' + (i + 1) + '. ' + padR(label.length > 44 ? label.slice(0, 42) + '…' : label, 46) + moneyL(d.cost, 9));
     });
-  } else { lines.push('   (no positive-cost leaves found)'); }
+  }
   lines.push('');
   lines.push('── NOTES ' + L.slice(0, 47));
   lines.push('Model:   HTP Device Costing Dashboard v' + (data.version || '?'));
-  lines.push('Sources: Component teardown benchmarks · industry ODM rates · supplier indices.');
+  lines.push('Sources: Teardowns · SIA · Benchmark Minerals · Ecoinvent · industry ODM rates.');
   lines.push('');
   lines.push('This brief is generated from a bottom-up should-cost model.');
-  lines.push('It is a negotiation starting point, not a contractual position.');
   return lines.join('\n');
 }
 function getTopCostDrivers(evaluatedTree, limit) {
@@ -1066,7 +1357,7 @@ function getTopCostDrivers(evaluatedTree, limit) {
     else if (typeof n.cost === 'number' && n.cost > 0) leaves.push({ name: n.name, parent: parentName || '', cost: n.cost });
   }
   walk(evaluatedTree, '');
-  return leaves.sort((a, b) => b.cost - a.cost).slice(0, limit || 5);
+  return leaves.sort((a, b) => b.cost - a.cost).slice(0, limit || 8);
 }
 function copyNegotiationBrief() {
   const textEl = document.getElementById('negBriefText');
@@ -1080,7 +1371,6 @@ function copyNegotiationBrief() {
 
 function getComputedMatrix(e2e) {
   if (!e2e) return [];
-  if (!e2e.tradeRules || !e2e.tradeRules.tariffByPair) return e2e.matrix || [];
   const rules = e2e.tradeRules;
   const carbonRules = rules.carbonRules || {};
   const euSet = new Set(carbonRules.euDestinations || []);
@@ -1108,15 +1398,7 @@ function getComputedMatrix(e2e) {
       const retailPriceBeforeTax = +(landedCost * (1 + wholesaleMarkupPct / 100)).toFixed(2);
       const vatPerUnit = +(retailPriceBeforeTax * (dest.vatRatePct || 0) / 100).toFixed(2);
       const finalRetailPrice = +(retailPriceBeforeTax + vatPerUnit).toFixed(2);
-      out.push({
-        source: src.id, destination: dest.id,
-        fob: +fob.toFixed(2),
-        freightPerUnit, insurancePerUnit, cif,
-        tariffRatePct, tariffPerUnit, customsPerUnit, inlandPerUnit,
-        carbonCostPerUnit, isEU, co2ePerUnit: carbon.totalCO2e,
-        landedCost,
-        wholesaleMarkupPct, retailPriceBeforeTax, vatPerUnit, finalRetailPrice
-      });
+      out.push({ source: src.id, destination: dest.id, fob: +fob.toFixed(2), freightPerUnit, insurancePerUnit, cif, tariffRatePct, tariffPerUnit, customsPerUnit, inlandPerUnit, carbonCostPerUnit, isEU, co2ePerUnit: carbon.totalCO2e, landedCost, wholesaleMarkupPct, retailPriceBeforeTax, vatPerUnit, finalRetailPrice });
     }
   }
   return out;
@@ -1148,8 +1430,8 @@ function renderTariffSimulator() {
                      : (originalTradeRules && originalTradeRules.defaultTariffPct != null ? originalTradeRules.defaultTariffPct : 0);
     const changed = Math.abs(val - baseline) > 0.01;
     h += '<div class="tariff-row">'
-       + '<div class="tariff-label">' + kp.label + (changed ? ' <span class="tariff-changed-dot" title="Changed from baseline">●</span>' : '') + '</div>'
-       + '<input type="range" min="0" max="30" step="0.5" value="' + val + '" data-pair="' + key + '" aria-label="Tariff rate for ' + kp.label + '" oninput="onTariffChange(this)">'
+       + '<div class="tariff-label">' + kp.label + (changed ? ' <span class="tariff-changed-dot">●</span>' : '') + '</div>'
+       + '<input type="range" min="0" max="30" step="0.5" value="' + val + '" data-pair="' + key + '" oninput="onTariffChange(this)">'
        + '<div class="tariff-value">' + Number(val).toFixed(1) + '%</div></div>';
   }
   body.innerHTML = h;
@@ -1169,7 +1451,7 @@ function onTariffChange(input) {
   const changed = Math.abs(val - baseline) > 0.01;
   if (labelEl) {
     const dot = labelEl.querySelector('.tariff-changed-dot');
-    if (changed && !dot) { const span = document.createElement('span'); span.className = 'tariff-changed-dot'; span.title = 'Changed from baseline'; span.textContent = '●'; labelEl.appendChild(span); }
+    if (changed && !dot) { const span = document.createElement('span'); span.className = 'tariff-changed-dot'; span.textContent = '●'; labelEl.appendChild(span); }
     else if (!changed && dot) dot.remove();
   }
   const e2e = data.endToEnd;
@@ -1200,7 +1482,7 @@ function renderTariffDeltaBadge() {
 }
 
 /* ============================================================
-   COMPETITIVE INTELLIGENCE
+   COMPETITIVE INTELLIGENCE (any-to-any with category breakdown)
    ============================================================ */
 
 function getComparePair() {
@@ -1265,18 +1547,10 @@ function renderCompareSelector() {
   if (!a) { a = productsA[0]; currentCompareA = a ? a.id : null; }
   let b = productsB.find(p => p.id === currentCompareB);
   if (!b) { b = productsB[0]; currentCompareB = b ? b.id : null; }
-  const companyOptsA = companies.map(c =>
-    '<option value="' + c + '"' + (c === compareCompanyA ? ' selected' : '') + '>' + escapeHtml(c) + '</option>'
-  ).join('');
-  const companyOptsB = companies.map(c =>
-    '<option value="' + c + '"' + (c === compareCompanyB ? ' selected' : '') + '>' + escapeHtml(c) + '</option>'
-  ).join('');
-  const modelOptsA = productsA.map(p =>
-    '<option value="' + p.id + '"' + (p.id === (a && a.id) ? ' selected' : '') + '>' + escapeHtml(p.name) + '</option>'
-  ).join('');
-  const modelOptsB = productsB.map(p =>
-    '<option value="' + p.id + '"' + (p.id === (b && b.id) ? ' selected' : '') + '>' + escapeHtml(p.name) + '</option>'
-  ).join('');
+  const companyOptsA = companies.map(c => '<option value="' + c + '"' + (c === compareCompanyA ? ' selected' : '') + '>' + escapeHtml(c) + '</option>').join('');
+  const companyOptsB = companies.map(c => '<option value="' + c + '"' + (c === compareCompanyB ? ' selected' : '') + '>' + escapeHtml(c) + '</option>').join('');
+  const modelOptsA = productsA.map(p => '<option value="' + p.id + '"' + (p.id === (a && a.id) ? ' selected' : '') + '>' + escapeHtml(p.name) + '</option>').join('');
+  const modelOptsB = productsB.map(p => '<option value="' + p.id + '"' + (p.id === (b && b.id) ? ' selected' : '') + '>' + escapeHtml(p.name) + '</option>').join('');
   wrap.innerHTML =
     '<div class="ci-side">'
     +   '<label class="ci-side-label">Company A</label>'
@@ -1334,24 +1608,26 @@ function renderCompareTable() {
   if (!a || !b || a.id === b.id) { wrap.innerHTML = ''; return; }
   const ca = calc(a), cb = calc(b);
   const carbA = calcCarbon(a), carbB = calcCarbon(b);
-  const rows = [
-    { label: 'Materials', a: ca.mat, b: cb.mat, lowerBetter: true },
-    { label: 'Labour (CMT)', a: ca.lab, b: cb.lab, lowerBetter: true },
-    { label: 'Overheads', a: ca.ovh, b: cb.ovh, lowerBetter: true },
-    { label: 'Factory margin', a: ca.margin, b: cb.margin, lowerBetter: true },
-    { label: 'Total FOB', a: ca.fob, b: cb.fob, lowerBetter: true, bold: true },
-    { label: 'Retail price', a: a.retailPrice || 0, b: b.retailPrice || 0, lowerBetter: false },
-    { label: 'FOB as % of retail', a: (a.retailPrice ? (ca.fob / a.retailPrice) * 100 : 0), b: (b.retailPrice ? (cb.fob / b.retailPrice) * 100 : 0), lowerBetter: true, isPercent: true },
-    { label: 'CO₂e per unit', a: carbA.totalCO2e, b: carbB.totalCO2e, lowerBetter: true, isCarbon: true },
-    { label: 'EU carbon cost / unit', a: getCarbonCostPerUnit(carbA.totalCO2e, true), b: getCarbonCostPerUnit(carbB.totalCO2e, true), lowerBetter: true, isCarbonCost: true }
-  ];
+
+  const rows = [];
+  CATEGORY_ORDER.forEach(catName => {
+    const va = ca.byCategory[catName] || 0;
+    const vb = cb.byCategory[catName] || 0;
+    if (va === 0 && vb === 0) return;
+    rows.push({ label: catName, a: va, b: vb, lowerBetter: catName !== 'Profit Margin' });
+  });
+  rows.push({ label: 'Total FOB', a: ca.fob, b: cb.fob, lowerBetter: true, bold: true });
+  rows.push({ label: 'Retail price', a: a.retailPrice || 0, b: b.retailPrice || 0, lowerBetter: false });
+  rows.push({ label: 'FOB as % of retail', a: (a.retailPrice ? (ca.fob / a.retailPrice) * 100 : 0), b: (b.retailPrice ? (cb.fob / b.retailPrice) * 100 : 0), lowerBetter: true, isPercent: true });
+  rows.push({ label: 'CO₂e per unit', a: carbA.totalCO2e, b: carbB.totalCO2e, lowerBetter: true, isCarbon: true });
+
   let h = '<table class="gap-table"><thead><tr>'
-        + '<th style="width:24%;">Cost Element</th>'
+        + '<th style="width:26%;">Cost Category</th>'
         + '<th style="text-align:right;">A · ' + escapeHtml(a.name) + '</th>'
         + '<th style="text-align:right;">B · ' + escapeHtml(b.name) + '</th>'
         + '<th style="text-align:right;">Δ (A−B)</th>'
         + '<th style="text-align:right;">Δ %</th>'
-        + '<th style="width:12%;">Better</th>'
+        + '<th style="width:10%;">Better</th>'
         + '</tr></thead><tbody>';
   for (const r of rows) {
     const va = Number(r.a) || 0, vb = Number(r.b) || 0;
@@ -1362,7 +1638,6 @@ function renderCompareTable() {
     const dCls = Math.abs(d) < 0.005 ? '' : ((r.lowerBetter ? (d < 0) : (d > 0)) ? 'better' : 'worse');
     const fmtV = v => {
       if (r.isCarbon) return v.toFixed(3) + ' kg';
-      if (r.isCarbonCost) return '$' + v.toFixed(4);
       if (r.isPercent) return v.toFixed(1) + '%';
       return fmt(v);
     };
@@ -1370,12 +1645,11 @@ function renderCompareTable() {
       const sign = v > 0.005 ? '+' : (v < -0.005 ? '−' : '');
       const abs = Math.abs(v);
       if (r.isCarbon) return sign + abs.toFixed(3) + ' kg';
-      if (r.isCarbonCost) return sign + '$' + abs.toFixed(4);
       if (r.isPercent) return sign + abs.toFixed(1) + 'pp';
       return sign + fmt(abs);
     };
     const fmtDPct = v => {
-      if (r.isPercent || r.isCarbonCost) return '—';
+      if (r.isPercent || r.isCarbon) return '—';
       const sign = v > 0.005 ? '+' : (v < -0.005 ? '−' : '');
       return sign + Math.abs(v).toFixed(1) + '%';
     };
@@ -1399,13 +1673,19 @@ function renderCompareChart() {
   const { a, b } = getComparePair();
   if (!a || !b || a.id === b.id) return;
   const ca = calc(a), cb = calc(b);
+  const labels = CATEGORY_ORDER.filter(c => (ca.byCategory[c] || 0) > 0 || (cb.byCategory[c] || 0) > 0)
+    .map(c => CATEGORY_SHORT[c] || c);
+  const dataA = CATEGORY_ORDER.filter(c => (ca.byCategory[c] || 0) > 0 || (cb.byCategory[c] || 0) > 0)
+    .map(c => ca.byCategory[c] || 0);
+  const dataB = CATEGORY_ORDER.filter(c => (ca.byCategory[c] || 0) > 0 || (cb.byCategory[c] || 0) > 0)
+    .map(c => cb.byCategory[c] || 0);
   compCharts.compare = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: ['Materials', 'Labour', 'Overheads', 'Factory margin', 'Total FOB'],
+      labels,
       datasets: [
-        { label: 'A · ' + a.name, data: [ca.mat, ca.lab, ca.ovh, ca.margin, ca.fob], backgroundColor: '#111', borderWidth: 0 },
-        { label: 'B · ' + b.name, data: [cb.mat, cb.lab, cb.ovh, cb.margin, cb.fob], backgroundColor: '#6a1b9a', borderWidth: 0 }
+        { label: 'A · ' + a.name, data: dataA, backgroundColor: '#111', borderWidth: 0 },
+        { label: 'B · ' + b.name, data: dataB, backgroundColor: '#6a1b9a', borderWidth: 0 }
       ]
     },
     options: { responsive: true, maintainAspectRatio: false,
@@ -1420,44 +1700,56 @@ function renderCompareInsights() {
   if (!a || !b || a.id === b.id) { wrap.innerHTML = ''; return; }
   const ca = calc(a), cb = calc(b);
   const carbA = calcCarbon(a), carbB = calcCarbon(b);
+
   const fobDelta = cb.fob - ca.fob;
   const cheaper = fobDelta > 0 ? a : b;
   const expensive = fobDelta > 0 ? b : a;
   const fobDeltaAbs = Math.abs(fobDelta);
   const fobDeltaPct = Math.min(ca.fob, cb.fob) ? (fobDeltaAbs / Math.min(ca.fob, cb.fob)) * 100 : 0;
-  const categories = [
-    { name: 'materials', a: ca.mat, b: cb.mat },
-    { name: 'labour', a: ca.lab, b: cb.lab },
-    { name: 'overheads', a: ca.ovh, b: cb.ovh },
-    { name: 'factory margin', a: ca.margin, b: cb.margin }
-  ];
-  let biggest = categories[0];
-  for (const c of categories) if (Math.abs(c.a - c.b) > Math.abs(biggest.a - biggest.b)) biggest = c;
+
+  // biggest category gap
+  let biggest = { name: 'Electronics', a: 0, b: 0 };
+  for (const catName of CATEGORY_ORDER) {
+    const va = ca.byCategory[catName] || 0;
+    const vb = cb.byCategory[catName] || 0;
+    if (Math.abs(va - vb) > Math.abs(biggest.a - biggest.b)) biggest = { name: catName, a: va, b: vb };
+  }
   const biggestDelta = biggest.a - biggest.b;
   const biggestWinner = biggestDelta > 0 ? b : a;
+
   const retailPctA = a.retailPrice ? (ca.fob / a.retailPrice) * 100 : 0;
   const retailPctB = b.retailPrice ? (cb.fob / b.retailPrice) * 100 : 0;
   const retailEffWinner = retailPctA < retailPctB ? a : b;
   const retailEffLoser = retailPctA < retailPctB ? b : a;
   const retailEffDiffPp = Math.abs(retailPctA - retailPctB);
+
   const carbDelta = carbB.totalCO2e - carbA.totalCO2e;
   const carbWinner = carbDelta > 0 ? a : b;
   const carbLoser = carbDelta > 0 ? b : a;
   const carbDeltaAbs = Math.abs(carbDelta);
   const carbPct = Math.min(carbA.totalCO2e, carbB.totalCO2e) ? (carbDeltaAbs / Math.min(carbA.totalCO2e, carbB.totalCO2e)) * 100 : 0;
+
   const insights = [];
   insights.push({
     icon: '💰', title: 'FOB position',
-    text: escapeHtml(cheaper.name) + ' is <strong>$' + fobDeltaAbs.toFixed(2) + '</strong> lower on FOB (' + fobDeltaPct.toFixed(1) + '%) than ' + escapeHtml(expensive.name) + '. The largest single driver is <strong>' + biggest.name + '</strong> at $' + Math.abs(biggestDelta).toFixed(2) + ', favouring ' + escapeHtml(biggestWinner.name) + '.'
+    text: escapeHtml(cheaper.name) + ' is <strong>$' + fobDeltaAbs.toFixed(2) + '</strong> lower on FOB (' + fobDeltaPct.toFixed(1) + '%) than ' + escapeHtml(expensive.name) + '. The largest single category is <strong>' + biggest.name + '</strong> at $' + Math.abs(biggestDelta).toFixed(2) + ', favouring ' + escapeHtml(biggestWinner.name) + '.'
   });
   insights.push({
     icon: '📊', title: 'Retail efficiency',
-    text: escapeHtml(retailEffWinner.name) + ' spends <strong>' + Math.min(retailPctA, retailPctB).toFixed(1) + '%</strong> of retail on FOB, vs ' + Math.max(retailPctA, retailPctB).toFixed(1) + '% for ' + escapeHtml(retailEffLoser.name) + '. That\'s a <strong>' + retailEffDiffPp.toFixed(1) + 'pp</strong> difference in how much of the shelf price is retained after device cost.'
+    text: escapeHtml(retailEffWinner.name) + ' spends <strong>' + Math.min(retailPctA, retailPctB).toFixed(1) + '%</strong> of retail on FOB, vs ' + Math.max(retailPctA, retailPctB).toFixed(1) + '% for ' + escapeHtml(retailEffLoser.name) + '.'
   });
   insights.push({
     icon: '🌱', title: 'Carbon footprint',
-    text: escapeHtml(carbWinner.name) + ' has <strong>' + carbDeltaAbs.toFixed(3) + ' kg</strong> lower CO₂e per device (' + carbPct.toFixed(1) + '%) than ' + escapeHtml(carbLoser.name) + '. At 2034 CBAM full phase-in, that gap translates to roughly <strong>$' + (carbDeltaAbs * 0.085).toFixed(4) + '</strong> per device for EU-bound shipments.'
+    text: escapeHtml(carbWinner.name) + ' has <strong>' + carbDeltaAbs.toFixed(3) + ' kg</strong> lower CO₂e per device (' + carbPct.toFixed(1) + '%) than ' + escapeHtml(carbLoser.name) + '.'
   });
+  const finA = ca.byCategory['Finishing'] || 0;
+  const finB = cb.byCategory['Finishing'] || 0;
+  if (Math.abs(finA - finB) > 0.01) {
+    insights.push({
+      icon: '✨', title: 'Finishing cost',
+      text: 'Finishing (anodising, bead blast, laser, painting) costs <strong>$' + finA.toFixed(2) + '</strong> on ' + escapeHtml(a.name) + ' vs <strong>$' + finB.toFixed(2) + '</strong> on ' + escapeHtml(b.name) + '.'
+    });
+  }
   const retailDelta = (b.retailPrice || 0) - (a.retailPrice || 0);
   if (Math.abs(retailDelta) > 1) {
     const higher = retailDelta > 0 ? b : a;
@@ -1465,7 +1757,7 @@ function renderCompareInsights() {
     const coherent = (fobDelta > 0 && retailDelta > 0) || (fobDelta < 0 && retailDelta < 0);
     insights.push({
       icon: '🏷️', title: 'Retail positioning',
-      text: escapeHtml(higher.name) + ' retails at <strong>' + fmt(Math.abs(retailDelta)) + '</strong> above ' + escapeHtml(lower.name) + '. ' + (coherent ? 'Cost and price move together — the positioning is coherent.' : 'Cost and price move in opposite directions — the higher-priced device is also the cheaper one to make, which is favourable to margin.')
+      text: escapeHtml(higher.name) + ' retails at <strong>' + fmt(Math.abs(retailDelta)) + '</strong> above ' + escapeHtml(lower.name) + '. ' + (coherent ? 'Cost and price move together.' : 'Cost and price move in opposite directions — the higher-priced device is also the cheaper one to make.')
     });
   }
   wrap.innerHTML = insights.map(i =>
@@ -1480,47 +1772,44 @@ function renderComparePriorities() {
   const { a, b } = getComparePair();
   if (!a || !b || a.id === b.id) { wrap.innerHTML = ''; return; }
   const ca = calc(a), cb = calc(b);
-  const carbA = calcCarbon(a), carbB = calcCarbon(b);
-  const categories = [
-    { name: 'Materials', a: ca.mat, b: cb.mat, action: 'Review material specification and component sourcing on the higher-cost device — check whether the gap is justified by performance or user-visible features.' },
-    { name: 'Labour (CMT)', a: ca.lab, b: cb.lab, action: 'Compare assembly minutes per operation. Simplified construction or partial automation could close most of the gap.' },
-    { name: 'Overheads', a: ca.ovh, b: cb.ovh, action: 'Consolidate volume on the higher-overhead SKU to capture scale, or renegotiate overhead recovery with the ODM.' },
-    { name: 'Factory margin', a: ca.margin, b: cb.margin, action: 'Renegotiate margin target with the ODM — the higher-margin device is paying more for the same operational base.' }
-  ];
+
   const priorities = [];
-  for (const c of categories) {
-    const d = c.a - c.b;
-    if (Math.abs(d) < 0.05) continue;
+  const actionMap = {
+    'Electronics': 'Review component tier (MCU, PMIC, MOSFET) and consolidate PCB suppliers on the higher-cost device.',
+    'Mechanical': 'Compare housing material and chassis design — the higher-cost device may have tolerance room.',
+    'Finishing': 'Compare finishing steps (anodising, bead blast, laser, painting). Moving to a lower-cost finishing supplier can save 15–25% on this category alone.',
+    'Heating Engine': 'The heating element is a strategic component. Consider dual-sourcing or design-for-manufacture simplification.',
+    'Battery': 'The Li-ion cell is the largest single line item. Cell chemistry and supplier consolidation drive most of the gap.',
+    'MVA (Material Value Add)': 'Compare SMT and assembly minutes. Partial automation could close the gap on the higher-cost SKU.',
+    'Amortization': 'Amortization is volume-driven. Consolidating volume on the higher-amortisation SKU will reduce per-unit cost.',
+    'Packaging': 'Review retail box cost, cable inclusion, and manual printing. Small savings here compound at scale.',
+    'Profit Margin': 'Renegotiate margin target with the ODM. The higher-margin device is paying more for the same operational base.'
+  };
+  CATEGORY_ORDER.forEach(catName => {
+    const va = ca.byCategory[catName] || 0;
+    const vb = cb.byCategory[catName] || 0;
+    const d = va - vb;
+    if (Math.abs(d) < 0.05) return;
     const higher = d > 0 ? a : b;
     const lower = d > 0 ? b : a;
-    const higherVal = d > 0 ? c.a : c.b;
-    const lowerVal = d > 0 ? c.b : c.a;
+    const higherVal = d > 0 ? va : vb;
+    const lowerVal = d > 0 ? vb : va;
     priorities.push({
-      area: c.name + ' gap · ' + higher.name,
-      why: higher.name + ' spends ' + fmt(higherVal) + ' on ' + c.name.toLowerCase() + ' vs ' + fmt(lowerVal) + ' for ' + lower.name + ' — a delta of ' + fmt(Math.abs(d)) + '.',
-      action: c.action,
+      area: catName + ' gap · ' + higher.name,
+      why: higher.name + ' spends ' + fmt(higherVal) + ' on ' + catName.toLowerCase() + ' vs ' + fmt(lowerVal) + ' for ' + lower.name + ' — a delta of ' + fmt(Math.abs(d)) + '.',
+      action: actionMap[catName] || 'Review the cost breakdown for this category.',
       impact: Math.abs(d) > 3.0 ? 'High' : (Math.abs(d) > 1.0 ? 'Medium' : 'Low'),
       effort: Math.abs(d) > 3.0 ? 'Medium' : 'Low'
     });
-  }
-  if (Math.abs(carbA.totalCO2e - carbB.totalCO2e) > 0.3) {
-    const higher = carbA.totalCO2e > carbB.totalCO2e ? a : b;
-    const lower = carbA.totalCO2e > carbB.totalCO2e ? b : a;
-    priorities.push({
-      area: 'Carbon footprint · ' + higher.name,
-      why: higher.name + ' has ' + Math.max(carbA.totalCO2e, carbB.totalCO2e).toFixed(3) + ' kgCO₂e per device vs ' + Math.min(carbA.totalCO2e, carbB.totalCO2e).toFixed(3) + ' for ' + lower.name + '.',
-      action: 'Explore recycled aluminium, refurbished battery programs, or smaller PCB footprint. Every 1 kg CO₂e removed saves ~$0.085 per device at full CBAM phase-in.',
-      impact: 'Medium',
-      effort: 'Medium'
-    });
-  }
+  });
   const impactOrder = { High: 0, Medium: 1, Low: 2 };
   priorities.sort((x, y) => (impactOrder[x.impact] || 3) - (impactOrder[y.impact] || 3));
+
   if (priorities.length === 0) {
     wrap.innerHTML = '<p style="color:#888; font-size:13px;">No material differences detected between the two devices.</p>';
     return;
   }
-  wrap.innerHTML = priorities.slice(0, 5).map((p, i) =>
+  wrap.innerHTML = priorities.slice(0, 6).map((p, i) =>
     '<div class="ci-priority">'
     + '<div><span class="ci-rank">' + (i + 1) + '</span><span class="ci-area">' + escapeHtml(p.area) + '</span></div>'
     + '<div class="ci-why">' + escapeHtml(p.why) + '</div>'
@@ -1566,6 +1855,7 @@ function buildProjection(product) {
   for (let q = 0; q < 6; q++) {
     const matCopy = {};
     Object.entries(data.assumptions.materialPrices).forEach(([k, v]) => {
+      if (String(k).startsWith('_comment')) return;
       const price = typeof v === 'object' ? v.price : v;
       let multiplier = 1;
       data.forecasts.drivers.forEach(d => {
@@ -1631,7 +1921,7 @@ function renderForecastTab() {
             { label: 'Total FOB', data: proj.projections.map(x => x.fob), borderColor: '#111', backgroundColor: 'rgba(17,17,17,0.06)', borderWidth: 2.5, tension: 0.3, fill: true, pointRadius: 4 },
             { label: 'Materials', data: proj.projections.map(x => x.materials), borderColor: '#2d6a4f', borderWidth: 1.5, tension: 0.3, pointRadius: 2 },
             { label: 'Labour', data: proj.projections.map(x => x.labour), borderColor: '#f57c00', borderWidth: 1.5, tension: 0.3, pointRadius: 2 },
-            { label: 'Overheads', data: proj.projections.map(x => x.overheads), borderColor: '#999', borderWidth: 1.5, tension: 0.3, pointRadius: 2 }
+            { label: 'Margin', data: proj.projections.map(x => x.margin), borderColor: '#6a1b9a', borderWidth: 1.5, tension: 0.3, pointRadius: 2 }
           ]},
           options: { responsive: true, maintainAspectRatio: false,
             plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } },
@@ -1713,15 +2003,7 @@ function readUrl() {
   const hash = location.hash.replace(/^#/, '');
   if (!hash) return {};
   const params = new URLSearchParams(hash);
-  return {
-    product: params.get('product'),
-    loc: params.get('loc'),
-    tier: params.get('tier'),
-    tab: params.get('tab'),
-    s: params.get('s'),
-    ca: params.get('ca'),
-    cb: params.get('cb')
-  };
+  return { product: params.get('product'), loc: params.get('loc'), tier: params.get('tier'), tab: params.get('tab'), s: params.get('s'), ca: params.get('ca'), cb: params.get('cb') };
 }
 function applyUrlState(u) {
   if (!data || !u) return;
@@ -1833,8 +2115,8 @@ function computeScenarioFobs(snap) {
     const mats = snap.assumptions.materialPrices;
     const result = {};
     for (const p of data.products) {
-      try { const c = calc(p, loc, mats); result[p.id] = { fob: c.fob, mat: c.mat, lab: c.lab, ovh: c.ovh, margin: c.margin }; }
-      catch (err) { result[p.id] = { fob: 0, mat: 0, lab: 0, ovh: 0, margin: 0 }; }
+      try { const c = calc(p, loc, mats); result[p.id] = { fob: c.fob, mat: c.mat, lab: c.lab, ovh: c.ovh, margin: c.margin, byCategory: c.byCategory }; }
+      catch (err) { result[p.id] = { fob: 0, mat: 0, lab: 0, ovh: 0, margin: 0, byCategory: {} }; }
     }
     return result;
   } finally { data.assumptions = sA; currentTier = sT; currentLocation = sL; }
@@ -1885,6 +2167,8 @@ function refreshEverything() {
   safeRender('scenarios', renderScenariosTab);
   safeRender('competitive', renderCompetitiveTab);
   safeRender('e2e', renderE2ETab);
+  if (data.processFlow) safeRender('process', renderProcessTab);
+  if (typeof renderDtcTab === 'function') safeRender('dtc', renderDtcTab);
   if (currentBriefProduct) safeRender('brief', () => renderNegotiationBrief(currentBriefProduct));
   syncUrl();
 }
@@ -2093,7 +2377,7 @@ function renderScenarioCompare() {
     out.innerHTML = h;
   } catch (err) {
     console.error('renderScenarioCompare crashed:', err);
-    out.innerHTML = '<div class="sc-error">Could not render comparison: ' + escapeHtml(err && err.message ? err.message : String(err)) + '</div>';
+    out.innerHTML = '<div class="sc-error">Could not render comparison.</div>';
   }
 }
 
@@ -2106,7 +2390,7 @@ async function load() {
     const r = await fetch('cost_data.json');
     if (!r.ok) throw new Error('HTTP ' + r.status);
     data = await r.json();
-    console.log('HTP costing data loaded. Devices:', data.products.length);
+    console.log('HTP costing data loaded (v' + (data.version || '?') + '). Devices:', data.products.length);
   } catch (err) {
     console.error('Failed to load cost_data.json:', err);
     document.getElementById('updated').textContent = 'Error loading cost_data.json';
@@ -2124,6 +2408,7 @@ async function load() {
 
   const now = Date.now();
   for (const [key, entry] of Object.entries(data.assumptions.materialPrices)) {
+    if (String(key).startsWith('_comment')) continue;
     const c = feedCache[key];
     if (c && now - c.ts < FEED_TTL_MS && typeof entry === 'object') entry.price = c.price;
   }
@@ -2157,6 +2442,8 @@ async function load() {
   safeRender('forecast', renderForecastTab);
   safeRender('competitive', renderCompetitiveTab);
   safeRender('e2e', renderE2ETab);
+  safeRender('process', renderProcessTab);
+  if (typeof renderDtcTab === 'function') safeRender('dtc', renderDtcTab);
 
   renderFeedBadge();
   applyUrlState(readUrl());
@@ -2173,72 +2460,10 @@ function showTab(name, btn) {
   if (name === 'negotiation') safeRender('negotiation', renderNegotiationTab);
   if (name === 'forecast') safeRender('forecast', renderForecastTab);
   if (name === 'competitive') safeRender('competitive', renderCompetitiveTab);
+  if (name === 'process' && data.processFlow) safeRender('process', renderProcessTab);
   if (name === 'e2e') safeRender('e2e', renderE2ETab);
+  if (name === 'dtc' && typeof renderDtcTab === 'function') safeRender('dtc', renderDtcTab);
   syncUrl();
-}
-
-/* ============================================================
-   COST ENGINE
-   ============================================================ */
-
-function getTierMultipliers() {
-  const tier = data.assumptions.supplierTiers[currentTier];
-  return tier || { laborMultiplier: 1, machineMultiplier: 1, overheadMultiplier: 1, moqMultiplier: 1, marginPercent: 12 };
-}
-function machineRatePerHr(machineKey) {
-  const m = data.assumptions.machineAssumptions[machineKey];
-  if (!m) return currentLocation.machineRatePerHr;
-  const depreciation = m.capitalCost / (m.lifeYears * m.operatingHoursPerYear);
-  const maintenance = depreciation * (m.maintenancePercentOfDep / 100);
-  return (depreciation + maintenance + m.powerCostPerHr) * getTierMultipliers().machineMultiplier;
-}
-function evaluateNode(node, loc, matPrices) {
-  if (node.children && node.children.length > 0 && !node.type) return node.children.reduce((s, c) => s + evaluateNode(c, loc, matPrices), 0);
-  const t = getTierMultipliers();
-  switch (node.type) {
-    case 'time_labour': return (node.inputs.minutesPerUnit / 60) * loc.laborRatePerHr * t.laborMultiplier;
-    case 'labour_rate': return 0;
-    case 'machine_rate': return 0;
-    case 'time_machine': return (node.inputs.minutesPerUnit / 60) * machineRatePerHr(node.inputs.machineKey);
-    case 'overhead': return (node.inputs.minutesPerUnit / 60) * loc.overheadRatePerHr * t.overheadMultiplier;
-    case 'material': {
-      const e = matPrices[node.inputs.priceKey];
-      const price = e ? (typeof e === 'object' ? e.price : e) : 0;
-      return node.inputs.quantity * price;
-    }
-    case 'fixed_amortised': return node.inputs.mouldCost / node.inputs.lifecycleUnits;
-    case 'percent_of_subtotal': return 0;
-    default: return node.cost || 0;
-  }
-}
-function evaluateTree(node, loc, matPrices, path) {
-  const newPath = path ? path + '/' + node.name : node.name;
-  const newNode = { ...node, _path: newPath };
-  if (node.children && node.children.length > 0 && !node.type) {
-    newNode.children = node.children.map(c => evaluateTree(c, loc, matPrices, newPath));
-    const subtotal = newNode.children.filter(c => c.type !== 'percent_of_subtotal').reduce((s, c) => s + c.cost, 0);
-    newNode.children = newNode.children.map(c => {
-      if (c.type === 'percent_of_subtotal') return { ...c, cost: subtotal * (c.inputs.percent / 100) };
-      return c;
-    });
-    newNode.cost = newNode.children.reduce((s, c) => s + c.cost, 0);
-  } else { newNode.cost = evaluateNode(node, loc, matPrices); }
-  return newNode;
-}
-function totalOf(node) { if (typeof node.cost === 'number') return node.cost; return (node.children || []).reduce((s, c) => s + totalOf(c), 0); }
-function calc(p, locOverride, matOverride) {
-  const loc = locOverride || currentLocation || data.assumptions.locations[0];
-  const mats = matOverride || data.assumptions.materialPrices;
-  const tree = evaluateTree(p.costTree, loc, mats, '');
-  const fob = tree.cost;
-  const findTop = n => tree.children.find(c => c.name === n);
-  return {
-    tree, fob,
-    mat: (findTop('Materials') || {}).cost || 0,
-    lab: (findTop('Labour (CMT)') || {}).cost || 0,
-    ovh: (findTop('Overheads') || {}).cost || 0,
-    margin: (findTop('Factory Margin') || {}).cost || 0
-  };
 }
 
 /* ============================================================
@@ -2270,25 +2495,32 @@ function renderCompanyRows() {
     row.dataset.brand = brand;
 
     const opts = devices.map(d => '<option value="' + d.id + '"' + (d.id === product.id ? ' selected' : '') + '>' + escapeHtml(d.name) + '</option>').join('');
+    const cat = c.byCategory;
 
     row.innerHTML =
       '<div class="company-header">'
       + '<div class="company-name"><span class="company-code">' + escapeHtml(brand) + '</span>' + escapeHtml(BRAND_NAMES[brand] || brand) + '</div>'
       + '<div class="company-selector">'
       + '<label>Select device</label>'
-      + '<select onchange="onCompanyDeviceChange(\'' + brand + '\', this.value)" aria-label="Select device for ' + escapeHtml(brand) + '">' + opts + '</select>'
+      + '<select onchange="onCompanyDeviceChange(\'' + brand + '\', this.value)">' + opts + '</select>'
       + '</div>'
       + '</div>'
       + '<div class="company-summary">'
       + '<div class="company-cost-lines">'
-      + '<div class="company-cost-line"><div class="lbl">Materials</div><div class="val">' + fmt(c.mat) + '</div></div>'
-      + '<div class="company-cost-line"><div class="lbl">Labour</div><div class="val">' + fmt(c.lab) + '</div></div>'
-      + '<div class="company-cost-line"><div class="lbl">Overheads</div><div class="val">' + fmt(c.ovh) + '</div></div>'
-      + '<div class="company-cost-line"><div class="lbl">Margin</div><div class="val">' + fmt(c.margin) + '</div></div>'
-      + '<div class="company-cost-line highlight"><div class="lbl">Variable FOB</div><div class="val">' + fmt(c.fob) + '</div></div>'
-      + '<div class="company-cost-line highlight"><div class="lbl">Total unit cost @ MOQ</div><div class="val">' + fmt(totalUnit) + '</div></div>'
+      + '<div class="company-cost-line"><div class="lbl">Electronics</div><div class="val">' + fmt(cat['Electronics']) + '</div></div>'
+      + '<div class="company-cost-line"><div class="lbl">Mechanical</div><div class="val">' + fmt(cat['Mechanical']) + '</div></div>'
+      + '<div class="company-cost-line finishing"><div class="lbl">Finishing</div><div class="val">' + fmt(cat['Finishing']) + '</div></div>'
+      + '<div class="company-cost-line"><div class="lbl">Heating Engine</div><div class="val">' + fmt(cat['Heating Engine']) + '</div></div>'
+      + '<div class="company-cost-line"><div class="lbl">Battery</div><div class="val">' + fmt(cat['Battery']) + '</div></div>'
+      + '<div class="company-cost-line"><div class="lbl">MVA</div><div class="val">' + fmt(cat['MVA (Material Value Add)']) + '</div></div>'
+      + '<div class="company-cost-line"><div class="lbl">Amortization</div><div class="val">' + fmt(cat['Amortization']) + '</div></div>'
+      + '<div class="company-cost-line"><div class="lbl">Packaging</div><div class="val">' + fmt(cat['Packaging']) + '</div></div>'
+      + '<div class="company-cost-line"><div class="lbl">Margin</div><div class="val">' + fmt(cat['Profit Margin']) + '</div></div>'
+      + '<div class="company-cost-line highlight" style="grid-column: span 2;"><div class="lbl">Variable FOB</div><div class="val" style="font-size:20px;">' + fmt(c.fob) + '</div></div>'
+      + '<div class="company-cost-line highlight" style="grid-column: span 1;"><div class="lbl">Total @ MOQ</div><div class="val" style="font-size:20px;">' + fmt(totalUnit) + '</div></div>'
       + '</div>'
       + '<div class="company-meta">'
+      + '<div class="company-meta-line"><span class="lbl">Annual volume (baseline)</span><span class="val">' + (product.annualVolume ? product.annualVolume.toLocaleString() + ' units' : '—') + '</span></div>'
       + '<div class="company-meta-line"><span class="lbl">MOQ (current tier)</span><span class="val">' + moqEffective.toLocaleString() + ' units</span></div>'
       + '<div class="company-meta-line"><span class="lbl">Fixed pool</span><span class="val">$' + (product.moq ? product.moq.fixedCostPool.toLocaleString() : '0') + '</span></div>'
       + '<div class="company-meta-line"><span class="lbl">Fixed per unit</span><span class="val">' + fmt(fixedPerUnit) + '</span></div>'
@@ -2343,11 +2575,17 @@ function renderDrilldown() {
     co2eChip.textContent = '🌱 ' + carbon.totalCO2e.toFixed(3) + ' kgCO₂e/device · $' + carbonCostEU.toFixed(4) + ' EU carbon cost (' + yr + ')';
   }
   if (chart) chart.destroy();
+
+  // New doughnut with category colours
+  const labels = CATEGORY_ORDER.filter(cn => (c.byCategory[cn] || 0) > 0);
+  const values = labels.map(cn => c.byCategory[cn]);
+  const colors = labels.map(cn => CATEGORY_COLORS[cn]);
+
   chart = new Chart(document.getElementById('chart'), {
     type: 'doughnut',
-    data: { labels: ['Materials', 'Labour', 'Overheads', 'Margin'],
-      datasets: [{ data: [c.mat, c.lab, c.ovh, c.margin], backgroundColor: ['#111','#555','#999','#ddd'], borderWidth: 0 }] },
-    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    data: { labels: labels.map(cn => CATEGORY_SHORT[cn] || cn),
+      datasets: [{ data: values, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }] },
+    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } } }
   });
   if (selected.moq) {
     currentMOQ = selected.moq.current;
@@ -2361,7 +2599,7 @@ function renderDrilldown() {
 }
 function drawTreeChart(root) {
   const ids = [], labels = [], parents = [], values = [], colors = [];
-  const palette = ['#1a1a1a','#2d6a4f','#40916c','#52b788','#74c69d','#95d5b2','#b7e4c7'];
+  const palette = ['#1a1a1a','#283593','#6a1b9a','#c62828','#2d6a4f','#f57c00','#78909c','#8d6e63','#ffd54f'];
   function walk(n, pid, depth) {
     ids.push(n._path); labels.push(n.name); parents.push(pid || '');
     values.push(totalOf(n));
@@ -2453,6 +2691,8 @@ function onLocationChange() {
   safeRender('forecast', renderForecastTab);
   safeRender('e2e', renderE2ETab);
   safeRender('competitive', renderCompetitiveTab);
+  if (data.processFlow) safeRender('process', renderProcessTab);
+  if (typeof renderDtcTab === 'function') safeRender('dtc', renderDtcTab);
   if (currentBriefProduct) safeRender('brief', () => renderNegotiationBrief(currentBriefProduct));
   syncUrl();
 }
@@ -2463,6 +2703,8 @@ function onTierChange() {
   safeRender('negotiation', renderNegotiationTab);
   safeRender('e2e', renderE2ETab);
   safeRender('competitive', renderCompetitiveTab);
+  if (data.processFlow) safeRender('process', renderProcessTab);
+  if (typeof renderDtcTab === 'function') safeRender('dtc', renderDtcTab);
   if (currentBriefProduct) safeRender('brief', () => renderNegotiationBrief(currentBriefProduct));
   syncUrl();
 }
@@ -2527,6 +2769,7 @@ function renderAssumptionEditors() {
   const locEd = document.getElementById('locEditor'); if (!locEd) return;
   locEd.innerHTML = '';
   ['laborRatePerHr','machineRatePerHr','overheadRatePerHr','freightPerUnit','dutyRatePercent'].forEach(k => {
+    if (loc[k] == null) return;
     const row = document.createElement('div'); row.className = 'assumption-row';
     row.innerHTML = '<div class="key">' + k + '<div class="id">' + loc.id + '.' + k + '</div></div>'
       + '<input type="number" step="0.01" value="' + loc[k] + '" onchange="updateLocField(\'' + loc.id + '\',\'' + k + '\', this.value)">'
@@ -2536,6 +2779,7 @@ function renderAssumptionEditors() {
   const matEd = document.getElementById('materialEditor'); if (!matEd) return;
   matEd.innerHTML = '';
   Object.entries(data.assumptions.materialPrices).forEach(([k, e]) => {
+    if (String(k).startsWith('_comment')) return;
     const val = typeof e === 'number' ? e : e.price;
     const src = typeof e === 'object' ? e.source : '';
     const co2e = typeof e === 'object' && e.co2ePerKg != null ? e.co2ePerKg : null;
@@ -2726,6 +2970,71 @@ function renderRetailByMarket(e2e) {
 }
 
 /* ============================================================
+   PROCESS FLOW
+   ============================================================ */
+
+function renderProcessTab() {
+  if (!data.processFlow) return;
+  const product = selected || data.products[0];
+  const fob = calc(product).fob;
+  const titleEl = document.getElementById('processTitle');
+  if (titleEl) titleEl.textContent = '🔧 ' + product.name + ' — End-to-End Manufacturing Process';
+  renderProcessTimeline(fob);
+  renderProcessCards(fob);
+}
+function renderProcessTimeline(fob) {
+  const container = document.getElementById('stageTimeline'); if (!container) return;
+  container.innerHTML = '';
+  const stages = data.processFlow.stages;
+  let cumulative = 0;
+  stages.forEach((stage, i) => {
+    const cost = fob * stage.costSharePct / 100;
+    cumulative += cost;
+    const shortLocation = stage.location.split('—').pop().trim().split('·')[0].trim();
+    const tile = document.createElement('div');
+    tile.className = 'stage-tile';
+    tile.innerHTML = '<span class="tile-order">' + stage.order + '</span>'
+      + '<div class="tile-icon">' + stage.icon + '</div>'
+      + '<div class="tile-name">' + escapeHtml(stage.name) + '</div>'
+      + '<div class="tile-cost">' + fmt(cost) + '</div>'
+      + '<div class="tile-pct">' + stage.costSharePct.toFixed(1) + '% of FOB</div>'
+      + '<div class="tile-cumulative">cumulative: ' + fmt(cumulative) + '</div>'
+      + '<div class="tile-location">📍 ' + escapeHtml(shortLocation) + '</div>'
+      + (i < stages.length - 1 ? '<div class="arrow">→</div>' : '');
+    container.appendChild(tile);
+  });
+}
+function renderProcessCards(fob) {
+  const container = document.getElementById('stageCards'); if (!container) return;
+  container.innerHTML = '';
+  const stages = data.processFlow.stages;
+  stages.forEach(stage => {
+    const cost = fob * stage.costSharePct / 100;
+    const card = document.createElement('div');
+    card.className = 'stage-card';
+    card.onclick = () => card.classList.toggle('expanded');
+    card.innerHTML = '<div class="card-top">'
+      + '<span class="card-icon">' + stage.icon + '</span>'
+      + '<div>'
+      + '<div class="card-order">Stage ' + stage.order + ' of ' + stages.length + '</div>'
+      + '<div class="card-name">' + escapeHtml(stage.name) + '</div>'
+      + '</div>'
+      + '</div>'
+      + '<div class="card-cost-line"><span class="lbl">Cost allocation</span><span class="val">' + fmt(cost) + '</span></div>'
+      + '<div class="card-cost-line"><span class="lbl">% of FOB</span><span class="val">' + stage.costSharePct.toFixed(1) + '%</span></div>'
+      + '<div class="card-cost-line"><span class="lbl">Lead time</span><span class="val">' + escapeHtml(stage.leadTimeDays || '—') + '</span></div>'
+      + '<div class="card-cost-line"><span class="lbl">Location</span><span class="val" style="font-family:inherit;font-weight:600;font-size:12px;">' + escapeHtml(stage.location) + '</span></div>'
+      + '<div class="card-details">'
+      + '<div class="detail-section"><div class="detail-label">Process</div><div class="detail-text">' + escapeHtml(stage.process) + '</div></div>'
+      + '<div class="detail-section"><div class="detail-label">Key Cost Drivers</div><div class="driver-list">' + (stage.drivers || []).map(d => '<span class="driver-pill">' + escapeHtml(d) + '</span>').join('') + '</div></div>'
+      + '<div class="detail-section"><div class="detail-label">Inputs</div><div class="input-list">' + (stage.inputs || []).map(inp => '<span class="input-pill">' + escapeHtml(inp) + '</span>').join('') + '</div></div>'
+      + '<div class="detail-section"><div class="detail-label">Outputs</div><div class="output-list">' + (stage.outputs || []).map(out => '<span class="output-pill">' + escapeHtml(out) + '</span>').join('') + '</div></div>'
+      + '</div>';
+    container.appendChild(card);
+  });
+}
+
+/* ============================================================
    BOOT
    ============================================================ */
 
@@ -2734,5 +3043,6 @@ else load();
 
 window.addEventListener('hashchange', () => { if (!data) return; applyUrlState(readUrl()); });
 </script>
+<script src="dtc.js"></script>
 </body>
 </html>
