@@ -1,6 +1,6 @@
 /* ============================================================
    DESIGN-TO-COST / VALUE ENGINEERING — HTP DEVICES
-   v4.0 — GLB-only viewer with exploded view support
+   v4.1 — GLB-only viewer with exploded view + environment map
    Depends on globals from index.html: data, calc, fmt,
    getTierMultipliers, currentLocation, currentTier, escapeHtml
    ============================================================ */
@@ -87,7 +87,7 @@ let cad = {
   group: null, edgeLines: null,
   viewMode: 'solid',
   projection: 'perspective',
-  materialPreset: 'matte',
+  materialPreset: 'original',
   baseColor: '#4a148c',
   colorOverridden: false,
   initialized: false,
@@ -411,6 +411,54 @@ function clearViewerMessage() {
 }
 
 /* ============================================================
+   ENVIRONMENT MAP
+   Builds a procedural studio environment (gradient sky + emissive
+   panels) and feeds it into the scene as a PMREM-filtered cubemap.
+   Without this, metallic and glossy surfaces render nearly black
+   because MeshStandardMaterial has nothing to reflect.
+   ============================================================ */
+
+function setupEnvironment() {
+  if (!THREE.PMREMGenerator) return;
+  const pmremGenerator = new THREE.PMREMGenerator(cad.renderer);
+  pmremGenerator.compileEquirectangularShader();
+
+  const envScene = new THREE.Scene();
+
+  // Vertical gradient: sky → horizon → floor
+  const canvas = document.createElement('canvas');
+  canvas.width = 16;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+  const grad = ctx.createLinearGradient(0, 0, 0, 256);
+  grad.addColorStop(0.00, '#ffffff');   // sky
+  grad.addColorStop(0.45, '#dfe6ee');   // upper horizon
+  grad.addColorStop(0.55, '#8a97a8');   // lower horizon
+  grad.addColorStop(1.00, '#1a1a1a');   // floor
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 16, 256);
+  const gradientTex = new THREE.CanvasTexture(canvas);
+  gradientTex.mapping = THREE.EquirectangularReflectionMapping;
+  envScene.background = gradientTex;
+
+  // Emissive panels — these are what shape the highlights on glossy surfaces
+  const addPanel = (x, y, z, w, h, d, color) => {
+    const mat = new THREE.MeshBasicMaterial({ color: color });
+    const box = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    box.position.set(x, y, z);
+    envScene.add(box);
+  };
+  addPanel(-5,   5, -5, 6,  6, 0.5, 0xffffff);  // key light panel
+  addPanel( 5,   3,  3, 4,  8, 0.5, 0xeeeeff);  // fill panel (slightly cool)
+  addPanel( 0,  -6,  0, 14, 0.5, 14, 0x333333); // floor bounce (dim)
+
+  const envTex = pmremGenerator.fromScene(envScene, 0.02).texture;
+  cad.scene.environment = envTex;
+
+  pmremGenerator.dispose();
+}
+
+/* ============================================================
    EXPLODED VIEW
    ============================================================ */
 
@@ -554,7 +602,7 @@ function setMaterialPreset(preset) {
 function applyMaterialPresetToModel(model) {
   if (!model) return;
   const preset = getMaterialPreset(cad.materialPreset);
-  if (!preset) return;
+  if (!preset) return; // 'original' = leave materials alone
   model.traverse(child => {
     if (child.isMesh && child.material) {
       child.material.roughness = preset.roughness;
@@ -894,6 +942,10 @@ function initCadViewer() {
   cad.renderer = new THREE.WebGLRenderer({ antialias: true });
   cad.renderer.setSize(w, h);
   cad.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  // Correct colour pipeline for glTF assets
+  cad.renderer.outputEncoding = THREE.sRGBEncoding;
+  cad.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  cad.renderer.toneMappingExposure = 1.15;
   if (cad.renderer.shadowMap) {
     cad.renderer.shadowMap.enabled = true;
     cad.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -921,6 +973,9 @@ function initCadViewer() {
 
   cad.group = new THREE.Group();
   cad.scene.add(cad.group);
+
+  // Feed the PBR pipeline a studio environment
+  try { setupEnvironment(); } catch (err) { console.warn('Environment setup failed:', err); }
 
   if (typeof THREE.OrbitControls === 'function') {
     cad.controls = new THREE.OrbitControls(cad.camera, cad.renderer.domElement);
