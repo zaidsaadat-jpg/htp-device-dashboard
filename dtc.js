@@ -1,13 +1,28 @@
 /* ============================================================
    DESIGN-TO-COST / VALUE ENGINEERING — HTP DEVICES
-   v3.0 compatible: reads new top-level cost categories
-   (Electronics, Mechanical, Finishing, Heating Engine, Battery,
-   MVA, Amortization, Packaging, Profit Margin).
+   v4.0 — GLB-only viewer with exploded view support
    Depends on globals from index.html: data, calc, fmt,
    getTierMultipliers, currentLocation, currentTier, escapeHtml
    ============================================================ */
 
 const DTC_STORAGE = 'htp_dtc_scenario_v1';
+
+/* ============================================================
+   DEFAULT MODEL CONFIG
+   ============================================================
+   Place your .glb file in the repo root and set the path here.
+   If your file is named "device.glb" at the top level, leave as-is.
+   If it's in a subfolder, use './assets/device.glb' etc.
+   ============================================================ */
+const DEFAULT_GLB_URL = './device.glb';
+
+// How far parts move when the explode slider = 100%.
+// 2.5 means a part at the edge moves 2.5× its distance from centre.
+const EXPLODE_MAX_MULTIPLIER = 2.5;
+
+/* ============================================================
+   LEVERS
+   ============================================================ */
 
 const DTC_LEVERS = [
   { id: 'componentTier', name: 'Component Tier', owner: 'Design + Procurement', desc: 'Grade of MCU, heating element, and other components', appliesTo: 'materialsAndLabour',
@@ -19,9 +34,9 @@ const DTC_LEVERS = [
   },
   { id: 'batteryChemistry', name: 'Battery Chemistry', owner: 'Engineering + Procurement', desc: 'Li-ion cell composition and sourcing', appliesTo: 'battery',
     options: [
-      { id: 'standard',     label: 'Standard Li-ion',    costMultiplier: 1.00, valueMultiplier: 1.00, costHint: 'base' },
-      { id: 'highDensity',  label: 'High-density Li-ion', costMultiplier: 1.15, valueMultiplier: 1.12, costHint: '+15%' },
-      { id: 'recycled',     label: 'Recycled Li-ion',     costMultiplier: 0.92, valueMultiplier: 1.18, costHint: '−8%' }
+      { id: 'standard',    label: 'Standard Li-ion',      costMultiplier: 1.00, valueMultiplier: 1.00, costHint: 'base' },
+      { id: 'highDensity', label: 'High-density Li-ion',  costMultiplier: 1.15, valueMultiplier: 1.12, costHint: '+15%' },
+      { id: 'recycled',    label: 'Recycled Li-ion',      costMultiplier: 0.92, valueMultiplier: 1.18, costHint: '−8%' }
     ]
   },
   { id: 'displayType', name: 'Display Type', owner: 'Design', desc: 'User interface and screen', appliesTo: 'display',
@@ -33,32 +48,32 @@ const DTC_LEVERS = [
   },
   { id: 'housingMaterial', name: 'Housing & Finishing', owner: 'Design + Engineering', desc: 'Body material and surface treatment', appliesTo: 'housing',
     options: [
-      { id: 'plastic',  label: 'Plastic (painted)',    costMultiplier: 0.50, valueMultiplier: 0.80, costHint: '−50%' },
+      { id: 'plastic',   label: 'Plastic (painted)',    costMultiplier: 0.50, valueMultiplier: 0.80, costHint: '−50%' },
       { id: 'aluminium', label: 'Aluminium (anodised)', costMultiplier: 1.00, valueMultiplier: 1.00, costHint: 'base' },
-      { id: 'premium',  label: 'Premium CNC + finish',  costMultiplier: 1.45, valueMultiplier: 1.30, costHint: '+45%' }
+      { id: 'premium',   label: 'Premium CNC + finish', costMultiplier: 1.45, valueMultiplier: 1.30, costHint: '+45%' }
     ]
   },
   { id: 'automation', name: 'Assembly Automation', owner: 'Engineering + Ops', desc: 'Level of SMT and assembly automation', appliesTo: 'labour',
     options: [
-      { id: 'manual', label: 'Manual',           costMultiplier: 1.22, valueMultiplier: 0.95, costHint: '+22%' },
-      { id: 'semi',   label: 'Semi-auto',        costMultiplier: 1.00, valueMultiplier: 1.00, costHint: 'base' },
-      { id: 'full',   label: 'Fully automated',  costMultiplier: 0.85, valueMultiplier: 1.08, costHint: '−15%' }
+      { id: 'manual', label: 'Manual',          costMultiplier: 1.22, valueMultiplier: 0.95, costHint: '+22%' },
+      { id: 'semi',   label: 'Semi-auto',       costMultiplier: 1.00, valueMultiplier: 1.00, costHint: 'base' },
+      { id: 'full',   label: 'Fully automated', costMultiplier: 0.85, valueMultiplier: 1.08, costHint: '−15%' }
     ]
   },
   { id: 'volume', name: 'Annual Volume (per SKU)', owner: 'Procurement + Finance', desc: 'Order quantity, affects fixed cost amortisation', appliesTo: 'volume',
     options: [
-      { id: 'low',  label: '50,000',     volumeMultiplier: 0.25, costHint: '0.25×' },
-      { id: 'mid',  label: '200,000',    volumeMultiplier: 1.0,  costHint: '1×' },
-      { id: 'high', label: '1,000,000',  volumeMultiplier: 5.0,  costHint: '5×' },
-      { id: 'mass', label: '5,000,000',  volumeMultiplier: 25.0, costHint: '25×' }
+      { id: 'low',  label: '50,000',    volumeMultiplier: 0.25, costHint: '0.25×' },
+      { id: 'mid',  label: '200,000',   volumeMultiplier: 1.0,  costHint: '1×' },
+      { id: 'high', label: '1,000,000', volumeMultiplier: 5.0,  costHint: '5×' },
+      { id: 'mass', label: '5,000,000', volumeMultiplier: 25.0, costHint: '25×' }
     ]
   },
   { id: 'marginTarget', name: 'Factory Margin Target', owner: 'Finance + Procurement', desc: 'Margin the ODM earns on FOB', appliesTo: 'margin',
     options: [
-      { id: 'lean',    label: '8% (lean)',      margin: 8,  costHint: '−4pp' },
-      { id: 'base',    label: '12% (base)',     margin: 12, costHint: 'base' },
-      { id: 'premium', label: '15% (premium)',  margin: 15, costHint: '+3pp' },
-      { id: 'high',    label: '18% (high)',     margin: 18, costHint: '+6pp' }
+      { id: 'lean',    label: '8% (lean)',     margin: 8,  costHint: '−4pp' },
+      { id: 'base',    label: '12% (base)',    margin: 12, costHint: 'base' },
+      { id: 'premium', label: '15% (premium)', margin: 15, costHint: '+3pp' },
+      { id: 'high',    label: '18% (high)',    margin: 18, costHint: '+6pp' }
     ]
   }
 ];
@@ -69,18 +84,21 @@ let valueMatrixChart = null;
 
 let cad = {
   scene: null, camera: null, renderer: null, controls: null,
-  group: null, edgeLines: null, texture: null,
-  archetype: 'two-piece',
+  group: null, edgeLines: null,
   viewMode: 'solid',
   projection: 'perspective',
   materialPreset: 'matte',
   baseColor: '#4a148c',
+  colorOverridden: false,
   initialized: false,
   animating: false,
   lastW: 0, lastH: 0,
   currentModel: null,
-  loadedGLBs: {},
-  customGLB: null
+  parts: [],
+  selectedPartIndex: -1,
+  explodeTarget: 0,
+  explodeCurrent: 0,
+  explodeDirection: 'radial'
 };
 
 /* ============================================================
@@ -100,7 +118,7 @@ function initDtcState() {
 function saveDtcState() { try { localStorage.setItem(DTC_STORAGE, JSON.stringify(dtcState)); } catch(e) {} }
 
 /* ============================================================
-   COST COMPUTATION (v3.0 category-aware)
+   COST COMPUTATION
    ============================================================ */
 
 function getOpt(leverId) {
@@ -120,7 +138,6 @@ function computeDtcCost(product) {
   const volume        = getOpt('volume');
   const margin        = getOpt('marginTarget');
 
-  // Read v3.0 top-level categories directly
   const electronicsCost = cat['Electronics'] || 0;
   const mechanicalCost  = cat['Mechanical'] || 0;
   const finishingCost   = cat['Finishing'] || 0;
@@ -133,20 +150,17 @@ function computeDtcCost(product) {
   const tierMult = componentTier.costMultiplier || 1;
   const housingMult = housingMat.costMultiplier || 1;
 
-  // Apply lever multipliers
   const newElectronics = electronicsCost * tierMult;
   const newMechanical  = mechanicalCost * housingMult;
   const newFinishing   = finishingCost * housingMult;
   const newHeating     = heatingCost * tierMult;
   const newBattery     = batteryCost * (batteryChem.costMultiplier || 1);
   const newMva         = mvaCost * (automation.costMultiplier || 1);
-  const newAmort       = amortCost;
-  const newPackaging   = packagingCost;
 
   const totalMat = newElectronics + newMechanical + newFinishing + newHeating + newBattery;
   const labCost  = newMva;
 
-  const subtotal   = totalMat + labCost + newAmort + newPackaging;
+  const subtotal   = totalMat + labCost + amortCost + packagingCost;
   const marginCost = subtotal * ((margin.margin || 12) / 100);
   const fob        = subtotal + marginCost;
 
@@ -165,7 +179,7 @@ function computeDtcCost(product) {
   return {
     matCost: totalMat,
     labCost: labCost,
-    ovhCost: newAmort,
+    ovhCost: amortCost,
     marginCost: marginCost,
     fob: fob,
     fixedPerUnit: fixedPerUnit,
@@ -206,7 +220,6 @@ function selectLeverOption(leverId, optionId) {
   renderLevers(); updateDtcImpact(); renderActionBoard();
   renderScenarioCompare(); renderValueMatrix();
 }
-
 function resetLevers() {
   localStorage.removeItem(DTC_STORAGE);
   dtcState = {};
@@ -363,7 +376,7 @@ function renderScenarioCompare() {
 }
 
 /* ============================================================
-   3D VIEWER
+   MATERIAL PRESETS
    ============================================================ */
 
 function getMaterialPreset(name) {
@@ -371,176 +384,277 @@ function getMaterialPreset(name) {
     case 'matte':    return { roughness: 0.75, metalness: 0.05 };
     case 'gloss':    return { roughness: 0.25, metalness: 0.15 };
     case 'metal':    return { roughness: 0.35, metalness: 0.85 };
-    case 'leather':  return { roughness: 0.85, metalness: 0.02 };
     case 'fabric':   return { roughness: 0.95, metalness: 0.00 };
+    case 'original': return null;
     default:         return { roughness: 0.6,  metalness: 0.05 };
   }
 }
 
-function roundedBox(w, h, d, r) {
-  const shape = new THREE.Shape();
-  const x = -w / 2, y = -h / 2;
-  shape.moveTo(x + r, y);
-  shape.lineTo(x + w - r, y);
-  shape.quadraticCurveTo(x + w, y, x + w, y + r);
-  shape.lineTo(x + w, y + h - r);
-  shape.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  shape.lineTo(x + r, y + h);
-  shape.quadraticCurveTo(x, y + h, x, y + h - r);
-  shape.lineTo(x, y + r);
-  shape.quadraticCurveTo(x, y, x + r, y);
-  const geo = new THREE.ExtrudeGeometry(shape, {
-    depth: d, bevelEnabled: true,
-    bevelThickness: r * 0.35, bevelSize: r * 0.35,
-    bevelSegments: 5, curveSegments: 16, steps: 1
+/* ============================================================
+   VIEWER STATUS
+   ============================================================ */
+
+function setViewerStatus(text, state, progress) {
+  const el = document.getElementById('viewerStatus');
+  const txt = document.getElementById('viewerStatusText');
+  const prg = document.getElementById('viewerStatusProgress');
+  if (!el) return;
+  el.className = 'viewer-status' + (state ? ' ' + state : '');
+  el.style.display = 'flex';
+  if (txt) txt.textContent = text;
+  if (prg) prg.textContent = progress || '';
+}
+
+function clearViewerMessage() {
+  const el = document.getElementById('viewerStatus');
+  if (el) el.style.display = 'none';
+}
+
+/* ============================================================
+   EXPLODED VIEW
+   ============================================================ */
+
+function prepareExplosion(model) {
+  const box = new THREE.Box3().setFromObject(model);
+  const center = box.getCenter(new THREE.Vector3());
+  const parts = [];
+  model.traverse(child => {
+    if (child.isMesh) {
+      const partBox = new THREE.Box3().setFromObject(child);
+      const partCenter = partBox.getCenter(new THREE.Vector3());
+      const dirVec = partCenter.clone().sub(center);
+      let dir;
+      if (dirVec.lengthSq() < 1e-6) {
+        dir = new THREE.Vector3(0, 1, 0);
+      } else {
+        dir = dirVec.clone().normalize();
+      }
+      child.userData.originalPosition = child.position.clone();
+      child.userData.explodeDirection = dir;
+      child.userData.explodeDistance = partCenter.distanceTo(center);
+      if (!child.userData.partName) {
+        child.userData.partName = child.name || ('Part ' + (parts.length + 1));
+      }
+      parts.push(child);
+    }
   });
-  geo.translate(0, 0, -d / 2);
-  return geo;
+  return parts;
 }
 
-function buildProceduralTwoPiece() {
-  const group = new THREE.Group();
-  const holderGeo = roundedBox(1.05, 2.6, 0.55, 0.18);
-  const holder = new THREE.Mesh(holderGeo, new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.72 }));
-  holder.userData.isMainSurface = true;
-  holder.position.set(-0.6, 0.4, 0);
-  group.add(holder);
-  const chargerGeo = roundedBox(1.35, 2.9, 0.65, 0.22);
-  const charger = new THREE.Mesh(chargerGeo, new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.65 }));
-  charger.position.set(0.6, 0.2, -0.35);
-  group.add(charger);
-  const ringGeo = new THREE.TorusGeometry(0.34, 0.04, 12, 32);
-  const ring = new THREE.Mesh(ringGeo, new THREE.MeshStandardMaterial({ color: 0x4a148c, metalness: 0.6, roughness: 0.3 }));
-  ring.position.set(-0.6, 0.9, 0.32);
-  group.add(ring);
-  for (let i = 0; i < 3; i++) {
-    const dotGeo = new THREE.SphereGeometry(0.055, 12, 12);
-    const dot = new THREE.Mesh(dotGeo, new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x4a148c, emissiveIntensity: 0.6 }));
-    dot.position.set(0.6 + (i - 1) * 0.22, -1.05, 0.05);
-    group.add(dot);
-  }
-  group.position.set(0, -0.4, 0);
-  return group;
-}
-
-function buildProceduralAllInOne() {
-  const group = new THREE.Group();
-  const bodyGeo = roundedBox(1.15, 3.1, 0.62, 0.22);
-  const body = new THREE.Mesh(bodyGeo, new THREE.MeshStandardMaterial({ color: 0x4a148c, roughness: 0.65 }));
-  body.userData.isMainSurface = true;
-  group.add(body);
-  const displayGeo = roundedBox(0.85, 0.75, 0.08, 0.08);
-  const display = new THREE.Mesh(displayGeo, new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.2, metalness: 0.5 }));
-  display.position.set(0, 0.85, 0.33);
-  group.add(display);
-  const btnGeo = roundedBox(0.08, 0.42, 0.12, 0.03);
-  const btn = new THREE.Mesh(btnGeo, new THREE.MeshStandardMaterial({ color: 0xd0d0d0, metalness: 0.7, roughness: 0.25 }));
-  btn.position.set(0.60, 0.3, 0);
-  group.add(btn);
-  const portGeo = new THREE.BoxGeometry(0.28, 0.09, 0.06);
-  const port = new THREE.Mesh(portGeo, new THREE.MeshStandardMaterial({ color: 0x1a1a1a }));
-  port.position.set(0, -1.53, 0);
-  group.add(port);
-  group.position.set(0, -0.3, 0);
-  return group;
-}
-
-function buildProceduralPocketCharger() {
-  const group = new THREE.Group();
-  const bodyGeo = roundedBox(1.5, 3.0, 0.85, 0.28);
-  const body = new THREE.Mesh(bodyGeo, new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.7 }));
-  body.userData.isMainSurface = true;
-  group.add(body);
-  const slotGeo = roundedBox(1.0, 0.55, 0.6, 0.12);
-  const slot = new THREE.Mesh(slotGeo, new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.9 }));
-  slot.position.set(0, 1.05, 0.15);
-  group.add(slot);
-  for (let i = 0; i < 4; i++) {
-    const dotGeo = new THREE.SphereGeometry(0.055, 12, 12);
-    const dot = new THREE.Mesh(dotGeo, new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x86efac, emissiveIntensity: 0.7 }));
-    dot.position.set(-0.45 + i * 0.30, -1.15, 0.42);
-    group.add(dot);
-  }
-  group.position.set(0, -0.2, 0);
-  return group;
-}
-
-function buildProceduralHolder() {
-  const group = new THREE.Group();
-  const bodyGeo = roundedBox(1.05, 2.9, 0.55, 0.2);
-  const body = new THREE.Mesh(bodyGeo, new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.7 }));
-  body.userData.isMainSurface = true;
-  group.add(body);
-  const ringGeo = new THREE.TorusGeometry(0.33, 0.045, 12, 32);
-  const ring = new THREE.Mesh(ringGeo, new THREE.MeshStandardMaterial({ color: 0x4a148c, metalness: 0.6, roughness: 0.3 }));
-  ring.position.set(0, 1.05, 0.28);
-  group.add(ring);
-  group.position.set(0, -0.2, 0);
-  return group;
-}
-
-function buildArchetypeModel(archetype) {
-  switch (archetype) {
-    case 'all-in-one':     return buildProceduralAllInOne();
-    case 'pocket-charger': return buildProceduralPocketCharger();
-    case 'holder':         return buildProceduralHolder();
-    case 'two-piece':
-    default:               return buildProceduralTwoPiece();
+function applyExplosion(factor, directionMode) {
+  const parts = cad.parts;
+  if (!parts || parts.length === 0) return;
+  for (const part of parts) {
+    const orig = part.userData.originalPosition;
+    if (!orig) continue;
+    let dir;
+    const baseDir = part.userData.explodeDirection;
+    if (directionMode === 'x') {
+      dir = new THREE.Vector3(baseDir.x >= 0 ? 1 : -1, 0, 0);
+    } else if (directionMode === 'y') {
+      dir = new THREE.Vector3(0, baseDir.y >= 0 ? 1 : -1, 0);
+    } else if (directionMode === 'z') {
+      dir = new THREE.Vector3(0, 0, baseDir.z >= 0 ? 1 : -1);
+    } else {
+      dir = baseDir;
+    }
+    const distance = part.userData.explodeDistance || 0;
+    const offset = dir.clone().multiplyScalar(distance * factor * EXPLODE_MAX_MULTIPLIER);
+    part.position.copy(orig).add(offset);
   }
 }
 
+function animateExplosion() {
+  const diff = cad.explodeTarget - cad.explodeCurrent;
+  if (Math.abs(diff) < 0.001) {
+    cad.explodeCurrent = cad.explodeTarget;
+    applyExplosion(cad.explodeCurrent, cad.explodeDirection);
+    return;
+  }
+  cad.explodeCurrent += diff * 0.15;
+  applyExplosion(cad.explodeCurrent, cad.explodeDirection);
+}
+
+function onExplodeChange(val) {
+  cad.explodeTarget = Math.max(0, Math.min(100, parseInt(val))) / 100;
+  const v = document.getElementById('explodeValue');
+  if (v) v.textContent = Math.round(cad.explodeTarget * 100) + '%';
+}
+function setExplodePreset(percent) {
+  const slider = document.getElementById('explodeSlider');
+  if (slider) slider.value = percent;
+  onExplodeChange(percent);
+}
+function setExplodeDirection(dir) {
+  cad.explodeDirection = dir;
+  setActiveChip('explodeDirectionChips', dir);
+  applyExplosion(cad.explodeCurrent, cad.explodeDirection);
+  if (cad.viewMode === 'technical' && cad.currentModel) updateEdgeOverlay(cad.currentModel);
+}
+
+/* ============================================================
+   VIEW CONTROLS
+   ============================================================ */
+
+function setViewMode(mode) {
+  cad.viewMode = mode;
+  cad.group.traverse(c => {
+    if (c.isMesh) {
+      c.material.wireframe = (mode === 'wireframe');
+      c.material.needsUpdate = true;
+    }
+  });
+  const model = cad.currentModel;
+  if (model) updateEdgeOverlay(model);
+  setActiveChip('viewChips', mode);
+}
+function setProjection(proj) {
+  const container = document.getElementById('viewer3d');
+  if (!container) return;
+  const w = container.clientWidth, h = container.clientHeight;
+  if (w < 10 || h < 10) return;
+  const aspect = w / h;
+  const target = cad.controls ? cad.controls.target.clone() : new THREE.Vector3(0, 0, 0);
+  const oldPos = cad.camera.position.clone();
+  if (proj === 'orthographic') {
+    const size = 3.8;
+    cad.camera = new THREE.OrthographicCamera(-size * aspect, size * aspect, size, -size, 0.1, 1000);
+  } else {
+    cad.camera = new THREE.PerspectiveCamera(40, aspect, 0.1, 1000);
+  }
+  cad.camera.position.copy(oldPos);
+  cad.camera.lookAt(target);
+  if (typeof THREE.OrbitControls === 'function') {
+    if (cad.controls) cad.controls.dispose();
+    cad.controls = new THREE.OrbitControls(cad.camera, cad.renderer.domElement);
+    cad.controls.enableDamping = true;
+    cad.controls.dampingFactor = 0.08;
+    cad.controls.target.copy(target);
+    cad.controls.update();
+  }
+  cad.projection = proj;
+  setActiveChip('projectionChips', proj);
+}
+function setViewPreset(view) {
+  if (!cad.camera) return;
+  const t = new THREE.Vector3(0, 0, 0);
+  const d = 6.0;
+  if (view === 'front') cad.camera.position.set(0, 0, d);
+  else if (view === 'side') cad.camera.position.set(d, 0, 0);
+  else if (view === 'top') cad.camera.position.set(0.01, d, 0.01);
+  else cad.camera.position.set(d * 0.7, d * 0.5, d * 0.7);
+  cad.camera.lookAt(t);
+  if (cad.controls) { cad.controls.target.copy(t); cad.controls.update(); }
+}
+function setMaterialPreset(preset) {
+  cad.materialPreset = preset;
+  applyMaterialPresetToModel(cad.currentModel);
+  setActiveChip('materialChips', preset);
+}
 function applyMaterialPresetToModel(model) {
+  if (!model) return;
   const preset = getMaterialPreset(cad.materialPreset);
+  if (!preset) return;
   model.traverse(child => {
     if (child.isMesh && child.material) {
       child.material.roughness = preset.roughness;
       child.material.metalness = preset.metalness;
-      child.material.wireframe = (cad.viewMode === 'wireframe');
-      if (cad.texture && child.userData.isMainSurface) {
-        child.material.map = cad.texture;
-        child.material.color.set(0xffffff);
-      }
       child.material.needsUpdate = true;
     }
   });
 }
+function setBaseColor(hex) {
+  cad.baseColor = hex;
+  cad.colorOverridden = true;
+  cad.group.traverse(c => {
+    if (c.isMesh && c.userData.isMainSurface) {
+      if (!c.userData.originalColor) c.userData.originalColor = c.material.color.getHex();
+      c.material.color.set(hex);
+      c.material.needsUpdate = true;
+    }
+  });
+}
+function resetColor() {
+  cad.colorOverridden = false;
+  cad.group.traverse(c => {
+    if (c.isMesh && c.userData.originalColor != null) {
+      c.material.color.setHex(c.userData.originalColor);
+      c.material.needsUpdate = true;
+    }
+  });
+  const picker = document.getElementById('meshColor');
+  if (picker) picker.value = '#4a148c';
+}
+function setActiveChip(containerId, activeId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.querySelectorAll('.cad-chip').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.id === activeId);
+  });
+}
 
-function rebuildCadModel() {
-  if (!cad.group) return;
-  while (cad.group.children.length) cad.group.remove(cad.group.children[0]);
-  cad.edgeLines = null;
+/* ============================================================
+   PARTS LIST
+   ============================================================ */
 
-  if (cad.customGLB) {
-    applyMaterialPresetToModel(cad.customGLB);
-    cad.group.add(cad.customGLB);
-    cad.currentModel = cad.customGLB;
-    updateEdgeOverlay(cad.customGLB);
+function renderPartsList() {
+  const panel = document.getElementById('partsPanel');
+  const list = document.getElementById('partsList');
+  const count = document.getElementById('partCountLabel');
+  if (!panel || !list) return;
+  if (!cad.parts || cad.parts.length === 0) {
+    panel.style.display = 'none';
+    if (count) count.textContent = '';
     return;
   }
-
-  const model = buildArchetypeModel(cad.archetype);
-  const preset = getMaterialPreset(cad.materialPreset);
-  model.traverse(child => {
-    if (child.isMesh) {
-      child.castShadow = true;
-      child.receiveShadow = true;
-      if (cad.texture && child.userData.isMainSurface) {
-        child.material.map = cad.texture;
-        child.material.color.set(0xffffff);
-      } else if (child.userData.isMainSurface) {
-        child.material.color.set(cad.baseColor);
-      }
-      child.material.roughness = preset.roughness;
-      child.material.metalness = preset.metalness;
-      if (cad.viewMode === 'wireframe') child.material.wireframe = true;
-      child.material.needsUpdate = true;
-    }
+  panel.style.display = 'block';
+  if (count) count.textContent = '· ' + cad.parts.length + ' parts';
+  let h = '';
+  cad.parts.forEach((part, i) => {
+    const name = part.userData.partName || ('Part ' + (i + 1));
+    const selected = cad.selectedPartIndex === i ? ' selected' : '';
+    h += '<div class="part-item' + selected + '" onclick="selectPart(' + i + ')">'
+       + '<span class="part-index">' + String(i + 1).padStart(2, '0') + '</span>'
+       + '<span class="part-name" title="' + escapeHtml(name) + '">' + escapeHtml(name) + '</span>'
+       + '</div>';
   });
-
-  cad.group.add(model);
-  cad.currentModel = model;
-  updateEdgeOverlay(model);
+  list.innerHTML = h;
 }
+
+function selectPart(index) {
+  cad.selectedPartIndex = index;
+  highlightPart(index);
+  renderPartsList();
+  const el = document.querySelector('.part-item.selected');
+  if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+function highlightPart(index) {
+  cad.parts.forEach((p, i) => {
+    if (!p.material) return;
+    if (p.userData.originalEmissive === undefined && p.material.emissive) {
+      p.userData.originalEmissive = p.material.emissive.getHex();
+    }
+    if (i === index && p.material.emissive) {
+      p.material.emissive.setHex(0x4a148c);
+      p.material.emissiveIntensity = 0.35;
+    } else if (p.material.emissive) {
+      p.material.emissive.setHex(p.userData.originalEmissive || 0x000000);
+      p.material.emissiveIntensity = 1;
+    }
+    p.material.needsUpdate = true;
+  });
+}
+
+function clearSelection() {
+  cad.selectedPartIndex = -1;
+  highlightPart(-1);
+  renderPartsList();
+}
+
+/* ============================================================
+   EDGE OVERLAY (technical view)
+   ============================================================ */
 
 function updateEdgeOverlay(model) {
   if (!model) return;
@@ -561,6 +675,192 @@ function updateEdgeOverlay(model) {
   });
   cad.edgeLines = edgesGroup;
   cad.group.add(cad.edgeLines);
+}
+
+/* ============================================================
+   GLB LOADING
+   ============================================================ */
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+}
+
+function loadGLBFromURL(url, label) {
+  return new Promise((resolve, reject) => {
+    if (!THREE || !THREE.GLTFLoader) {
+      reject(new Error('GLTFLoader not available'));
+      return;
+    }
+    setViewerStatus('Loading ' + (label || url) + '…', 'loading', '');
+    const loader = new THREE.GLTFLoader();
+    loader.load(url,
+      gltf => {
+        try {
+          mountModel(gltf.scene);
+          setViewerStatus('✅ ' + (label || 'Model') + ' loaded', 'success', '');
+          setTimeout(clearViewerMessage, 2500);
+          resolve(gltf.scene);
+        } catch (err) { reject(err); }
+      },
+      xhr => {
+        if (xhr.lengthComputable) {
+          const pct = (xhr.loaded / xhr.total * 100).toFixed(0);
+          setViewerStatus('Loading ' + (label || url) + '…', 'loading', pct + '% · ' + formatBytes(xhr.loaded));
+        } else if (xhr.loaded) {
+          setViewerStatus('Loading ' + (label || url) + '…', 'loading', formatBytes(xhr.loaded));
+        }
+      },
+      err => {
+        console.warn('GLB load failed', url, err);
+        reject(err);
+      }
+    );
+  });
+}
+
+function mountModel(scene) {
+  const box = new THREE.Box3().setFromObject(scene);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z) || 1;
+  const scale = 3.2 / maxDim;
+  scene.scale.setScalar(scale);
+  scene.position.sub(center.multiplyScalar(scale));
+  scene.position.y += 0.1;
+
+  scene.traverse(child => {
+    if (child.isMesh) {
+      child.castShadow = true;
+      child.receiveShadow = true;
+      if (child.material) {
+        child.material.side = THREE.DoubleSide;
+        if (!child.userData.originalColor) {
+          child.userData.originalColor = child.material.color.getHex();
+        }
+        if (!child.material.map && !child.material.aoMap) {
+          child.userData.isMainSurface = true;
+        }
+      }
+    }
+  });
+
+  while (cad.group.children.length) cad.group.remove(cad.group.children[0]);
+  cad.edgeLines = null;
+
+  cad.group.add(scene);
+  cad.currentModel = scene;
+
+  cad.explodeCurrent = 0;
+  cad.explodeTarget = 0;
+  cad.selectedPartIndex = -1;
+  const slider = document.getElementById('explodeSlider');
+  if (slider) slider.value = 0;
+  const explodeVal = document.getElementById('explodeValue');
+  if (explodeVal) explodeVal.textContent = '0%';
+
+  cad.parts = prepareExplosion(scene);
+  renderPartsList();
+
+  applyMaterialPresetToModel(scene);
+  if (cad.viewMode === 'wireframe' || cad.viewMode === 'technical') {
+    setViewMode(cad.viewMode);
+  }
+  if (cad.colorOverridden) {
+    scene.traverse(c => {
+      if (c.isMesh && c.userData.isMainSurface) c.material.color.set(cad.baseColor);
+    });
+  }
+
+  const hint = document.getElementById('viewerHint');
+  if (hint) {
+    hint.textContent = '🖱️ Drag to rotate · Scroll to zoom · Right-click drag to pan';
+    hint.style.color = '#999';
+  }
+}
+
+function reloadDefaultModel() {
+  loadGLBFromURL(DEFAULT_GLB_URL, 'default model').catch(() => {
+    setViewerStatus('⚠ Could not load ' + DEFAULT_GLB_URL + '. Upload a GLB below.', 'error', '');
+  });
+}
+
+/* ============================================================
+   FILE UPLOAD
+   ============================================================ */
+
+function initUploadZone() {
+  const zone = document.getElementById('glbUploadZone');
+  const input = document.getElementById('glbInput');
+  if (!zone || !input) return;
+  if (zone.dataset.wired === '1') return;
+  zone.dataset.wired = '1';
+
+  zone.addEventListener('click', e => { if (e.target === input) return; input.click(); });
+  zone.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', e => { e.preventDefault(); e.stopPropagation(); zone.classList.remove('dragover'); });
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); e.stopPropagation(); zone.classList.remove('dragover');
+    if (e.dataTransfer.files && e.dataTransfer.files.length) handleGLBFile(e.dataTransfer.files[0]);
+  });
+  input.addEventListener('change', e => {
+    if (e.target.files && e.target.files.length) handleGLBFile(e.target.files[0]);
+    e.target.value = '';
+  });
+}
+
+function handleGLBFile(file) {
+  const zone = document.getElementById('glbUploadZone');
+  if (!file) return;
+  const name = (file.name || '').toLowerCase();
+  if (!name.endsWith('.glb') && !name.endsWith('.gltf')) {
+    setViewerStatus('❌ Not a valid .glb or .gltf file', 'error', '');
+    setTimeout(clearViewerMessage, 3500);
+    return;
+  }
+  if (zone) zone.classList.add('uploading');
+  const sizeText = formatBytes(file.size);
+  setViewerStatus('Reading ' + file.name + ' (' + sizeText + ')…', 'loading', '');
+
+  const reader = new FileReader();
+  reader.onprogress = e => {
+    if (e.lengthComputable) {
+      const percent = Math.min(99, (e.loaded / e.total) * 100);
+      setViewerStatus('Reading file…', 'loading', percent.toFixed(0) + '% · ' + formatBytes(e.loaded) + ' / ' + sizeText);
+    }
+  };
+  reader.onload = e => {
+    setViewerStatus('Parsing…', 'loading', '');
+    if (!THREE.GLTFLoader) {
+      setViewerStatus('❌ GLTFLoader not available', 'error', '');
+      if (zone) zone.classList.remove('uploading');
+      return;
+    }
+    const loader = new THREE.GLTFLoader();
+    loader.parse(e.target.result, '', gltf => {
+      try {
+        mountModel(gltf.scene);
+        setViewerStatus('✅ ' + file.name + ' loaded', 'success', '');
+        setTimeout(clearViewerMessage, 2500);
+      } catch (err) {
+        console.error('Mount error:', err);
+        setViewerStatus('❌ Could not display model', 'error', '');
+      }
+      if (zone) zone.classList.remove('uploading');
+    }, err => {
+      console.error('GLTF parse error:', err);
+      setViewerStatus('❌ Failed to parse. File may be corrupted or unsupported.', 'error', '');
+      if (zone) zone.classList.remove('uploading');
+      setTimeout(clearViewerMessage, 5000);
+    });
+  };
+  reader.onerror = () => {
+    setViewerStatus('❌ Failed to read the file', 'error', '');
+    if (zone) zone.classList.remove('uploading');
+    setTimeout(clearViewerMessage, 3500);
+  };
+  reader.readAsArrayBuffer(file);
 }
 
 /* ============================================================
@@ -622,8 +922,6 @@ function initCadViewer() {
   cad.group = new THREE.Group();
   cad.scene.add(cad.group);
 
-  rebuildCadModel();
-
   if (typeof THREE.OrbitControls === 'function') {
     cad.controls = new THREE.OrbitControls(cad.camera, cad.renderer.domElement);
     cad.controls.enableDamping = true;
@@ -639,6 +937,10 @@ function initCadViewer() {
   cad.lastW = w;
   cad.lastH = h;
   if (!cad.animating) { cad.animating = true; animateCad(); }
+
+  loadGLBFromURL(DEFAULT_GLB_URL, 'default model').catch(() => {
+    setViewerStatus('No default model at ' + DEFAULT_GLB_URL + ' — upload a GLB to begin.', 'error', '');
+  });
 }
 
 function animateCad() {
@@ -656,219 +958,15 @@ function animateCad() {
   }
   if (cad.controls) cad.controls.update();
   else if (cad.group) cad.group.rotation.y += 0.003;
+
+  if (Math.abs(cad.explodeTarget - cad.explodeCurrent) > 0.001) {
+    animateExplosion();
+    if (cad.viewMode === 'technical' && cad.currentModel && cad.edgeLines) {
+      updateEdgeOverlay(cad.currentModel);
+    }
+  }
+
   cad.renderer.render(cad.scene, cad.camera);
-}
-
-/* ============================================================
-   VIEW CONTROLS
-   ============================================================ */
-
-function setArchetype(type) {
-  cad.archetype = type;
-  cad.customGLB = null;
-  rebuildCadModel();
-  setActiveChip('archetypeChips', type);
-  const hint = document.getElementById('viewerHint');
-  if (hint) { hint.textContent = '🖱️ Drag to rotate · Scroll to zoom · Right-click drag to pan'; hint.style.color = '#999'; }
-}
-function setViewMode(mode) {
-  cad.viewMode = mode;
-  cad.group.traverse(c => {
-    if (c.isMesh) { c.material.wireframe = (mode === 'wireframe'); c.material.needsUpdate = true; }
-  });
-  const model = cad.currentModel;
-  if (model) updateEdgeOverlay(model);
-  setActiveChip('viewChips', mode);
-}
-function setProjection(proj) {
-  const container = document.getElementById('viewer3d');
-  if (!container) return;
-  const w = container.clientWidth, h = container.clientHeight;
-  if (w < 10 || h < 10) return;
-  const aspect = w / h;
-  const target = cad.controls ? cad.controls.target.clone() : new THREE.Vector3(0, 0, 0);
-  const oldPos = cad.camera.position.clone();
-  if (proj === 'orthographic') {
-    const size = 3.8;
-    cad.camera = new THREE.OrthographicCamera(-size * aspect, size * aspect, size, -size, 0.1, 1000);
-  } else {
-    cad.camera = new THREE.PerspectiveCamera(40, aspect, 0.1, 1000);
-  }
-  cad.camera.position.copy(oldPos);
-  cad.camera.lookAt(target);
-  if (typeof THREE.OrbitControls === 'function') {
-    if (cad.controls) cad.controls.dispose();
-    cad.controls = new THREE.OrbitControls(cad.camera, cad.renderer.domElement);
-    cad.controls.enableDamping = true;
-    cad.controls.dampingFactor = 0.08;
-    cad.controls.target.copy(target);
-    cad.controls.update();
-  }
-  cad.projection = proj;
-  setActiveChip('projectionChips', proj);
-}
-function setViewPreset(view) {
-  if (!cad.camera) return;
-  const t = new THREE.Vector3(0, 0, 0);
-  const d = 6.0;
-  if (view === 'front') cad.camera.position.set(0, 0, d);
-  else if (view === 'side') cad.camera.position.set(d, 0, 0);
-  else if (view === 'top') cad.camera.position.set(0.01, d, 0.01);
-  else cad.camera.position.set(d * 0.7, d * 0.5, d * 0.7);
-  cad.camera.lookAt(t);
-  if (cad.controls) { cad.controls.target.copy(t); cad.controls.update(); }
-}
-function setMaterialPreset(preset) {
-  cad.materialPreset = preset;
-  applyMaterialPresetToModel(cad.currentModel);
-  setActiveChip('materialChips', preset);
-}
-function setBaseColor(hex) {
-  cad.baseColor = hex;
-  if (cad.texture) return;
-  cad.group.traverse(c => {
-    if (c.isMesh && c.userData.isMainSurface) {
-      c.material.color.set(hex);
-      c.material.needsUpdate = true;
-    }
-  });
-}
-function setActiveChip(containerId, activeId) {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-  el.querySelectorAll('.cad-chip').forEach(chip => {
-    chip.classList.toggle('active', chip.dataset.id === activeId);
-  });
-}
-function resetToBuiltIn() {
-  cad.customGLB = null;
-  const hint = document.getElementById('viewerHint');
-  if (hint) {
-    hint.textContent = '🖱️ Drag to rotate · Scroll to zoom · Right-click drag to pan';
-    hint.style.color = '#999';
-  }
-  rebuildCadModel();
-}
-
-/* ============================================================
-   GLB UPLOAD
-   ============================================================ */
-
-function initUploadZone() {
-  const zone = document.getElementById('glbUploadZone');
-  const input = document.getElementById('glbInput');
-  if (!zone || !input) return;
-  if (zone.dataset.wired === '1') return;
-  zone.dataset.wired = '1';
-
-  zone.addEventListener('click', e => { if (e.target === input) return; input.click(); });
-  zone.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); zone.classList.add('dragover'); });
-  zone.addEventListener('dragleave', e => { e.preventDefault(); e.stopPropagation(); zone.classList.remove('dragover'); });
-  zone.addEventListener('drop', e => {
-    e.preventDefault(); e.stopPropagation(); zone.classList.remove('dragover');
-    if (e.dataTransfer.files && e.dataTransfer.files.length) handleGLBFile(e.dataTransfer.files[0]);
-  });
-  input.addEventListener('change', e => {
-    if (e.target.files && e.target.files.length) handleGLBFile(e.target.files[0]);
-    e.target.value = '';
-  });
-}
-
-function setProgressState(o) {
-  const progress = document.getElementById('uploadProgress');
-  const fill = document.getElementById('uploadProgressFill');
-  const text = document.getElementById('uploadProgressText');
-  const etaEl = document.getElementById('uploadProgressEta');
-  if (!progress || !fill || !text || !etaEl) return;
-  progress.style.display = 'block';
-  if (o.percent != null) fill.style.width = o.percent + '%';
-  if (o.status != null) text.textContent = o.status;
-  if (o.eta != null) etaEl.textContent = o.eta;
-  if (o.state === 'error') fill.classList.add('error'); else fill.classList.remove('error');
-  if (o.state === 'success') fill.classList.add('success'); else fill.classList.remove('success');
-}
-function hideProgress(delay) {
-  setTimeout(() => {
-    const progress = document.getElementById('uploadProgress');
-    if (progress) progress.style.display = 'none';
-    const fill = document.getElementById('uploadProgressFill');
-    if (fill) { fill.style.width = '0%'; fill.classList.remove('error', 'success'); }
-    const zone = document.getElementById('glbUploadZone');
-    if (zone) zone.classList.remove('uploading');
-  }, delay || 2500);
-}
-function formatBytes(bytes) {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-  return (bytes / 1024 / 1024).toFixed(1) + ' MB';
-}
-
-function handleGLBFile(file) {
-  const zone = document.getElementById('glbUploadZone');
-  if (!file) return;
-  const name = (file.name || '').toLowerCase();
-  if (!name.endsWith('.glb') && !name.endsWith('.gltf')) {
-    setProgressState({ percent: 100, status: '❌ Not a valid .glb or .gltf file', state: 'error' });
-    hideProgress(3500);
-    return;
-  }
-  if (zone) zone.classList.add('uploading');
-  const sizeText = formatBytes(file.size);
-  setProgressState({ percent: 0, status: 'Reading ' + file.name + ' (' + sizeText + ')…', eta: '', state: 'normal' });
-
-  const reader = new FileReader();
-  reader.onprogress = e => {
-    if (e.lengthComputable) {
-      const percent = Math.min(99, (e.loaded / e.total) * 100);
-      setProgressState({ percent, status: 'Reading file… ' + percent.toFixed(0) + '% · ' + formatBytes(e.loaded) + ' / ' + sizeText, eta: '', state: 'normal' });
-    }
-  };
-  reader.onload = e => {
-    setProgressState({ percent: 100, status: '✅ File read. Parsing…', eta: 'this may take a moment', state: 'normal' });
-    if (!THREE.GLTFLoader) {
-      setProgressState({ status: '❌ GLTFLoader not available', state: 'error' });
-      hideProgress(3500); if (zone) zone.classList.remove('uploading');
-      return;
-    }
-    const loader = new THREE.GLTFLoader();
-    loader.parse(e.target.result, '', gltf => {
-      const scene = gltf.scene;
-      const box = new THREE.Box3().setFromObject(scene);
-      const size = box.getSize(new THREE.Vector3());
-      const center = box.getCenter(new THREE.Vector3());
-      const maxDim = Math.max(size.x, size.y, size.z);
-      const scale = 3.2 / maxDim;
-      scene.scale.setScalar(scale);
-      scene.position.sub(center.multiplyScalar(scale));
-      scene.position.y += 0.1;
-      scene.traverse(child => {
-        if (child.isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
-          if (child.material) child.material.side = THREE.DoubleSide;
-        }
-      });
-      cad.customGLB = scene;
-      applyMaterialPresetToModel(scene);
-      while (cad.group.children.length) cad.group.remove(cad.group.children[0]);
-      cad.group.add(scene);
-      cad.currentModel = scene;
-      updateEdgeOverlay(scene);
-      setProgressState({ percent: 100, status: '✅ ' + file.name + ' loaded', eta: '', state: 'success' });
-      hideProgress(3000);
-      const hint = document.getElementById('viewerHint');
-      if (hint) { hint.textContent = '✅ Loaded: ' + file.name + ' (' + sizeText + ') · Drag to rotate'; hint.style.color = '#2d6a4f'; }
-    }, err => {
-      console.error('GLTF parse error:', err);
-      setProgressState({ status: '❌ Failed to parse. The file may be corrupted or in an unsupported format.', state: 'error' });
-      hideProgress(5000); if (zone) zone.classList.remove('uploading');
-    });
-  };
-  reader.onerror = () => {
-    setProgressState({ status: '❌ Failed to read the file', state: 'error' });
-    hideProgress(3500); if (zone) zone.classList.remove('uploading');
-  };
-  reader.readAsArrayBuffer(file);
 }
 
 /* ============================================================
