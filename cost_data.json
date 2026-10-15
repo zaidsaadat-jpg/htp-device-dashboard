@@ -1,0 +1,477 @@
+{
+  "version": "1.0",
+  "last_updated": "2026-10-15",
+  "currency": "USD",
+  "category": "htp_devices",
+  "notes": "HTP device costing model — BAT glo, PMI IQOS, JTI Ploom. Devices only. USD. Not actual manufacturer data.",
+
+  "assumptions": {
+    "sources": {
+      "labour_rates": "China Shenzhen electronics benchmark 2026; EU manufacturing benchmark; Malaysia SEA electronics benchmark",
+      "machine_rates": "Electronics SMT/assembly line benchmarks",
+      "material_prices": "Industry teardown estimates; supplier benchmarks; iFixit teardowns"
+    },
+    "locations": [
+      { "id": "china", "name": "China (Shenzhen)", "laborRatePerHr": 4.05, "machineRatePerHr": 3.05, "overheadRatePerHr": 1.40, "freightPerUnit": 0.85, "dutyRatePercent": 0, "source": "China electronics benchmark 2026" },
+      { "id": "poland", "name": "Poland", "laborRatePerHr": 8.65, "machineRatePerHr": 4.45, "overheadRatePerHr": 2.30, "freightPerUnit": 0.70, "dutyRatePercent": 0, "source": "EU manufacturing benchmark 2026" },
+      { "id": "malaysia", "name": "Malaysia", "laborRatePerHr": 5.20, "machineRatePerHr": 3.55, "overheadRatePerHr": 1.80, "freightPerUnit": 0.90, "dutyRatePercent": 0, "source": "Southeast Asia electronics benchmark 2026" }
+    ],
+    "defaultLocationId": "china",
+    "supplierTiers": {
+      "tier1": { "name": "Tier 1 — Global ODM", "laborMultiplier": 1.20, "machineMultiplier": 1.30, "overheadMultiplier": 1.25, "moqMultiplier": 2.0, "marginPercent": 15 },
+      "tier2": { "name": "Tier 2 — Regional Contract Manufacturer", "laborMultiplier": 1.00, "machineMultiplier": 1.00, "overheadMultiplier": 1.00, "moqMultiplier": 1.0, "marginPercent": 12 },
+      "tier3": { "name": "Tier 3 — Niche / Small Run", "laborMultiplier": 0.85, "machineMultiplier": 0.75, "overheadMultiplier": 0.80, "moqMultiplier": 0.4, "marginPercent": 10 }
+    },
+    "materialPrices": {
+      "battery_perUnit":          { "price": 6.10, "source": "Li-ion 2900mAh, bulk", "co2ePerKg": 65 },
+      "heatingElement_resistive": { "price": 1.52, "source": "Copper coil + ceramic core", "co2ePerKg": 25 },
+      "heatingElement_induction": { "price": 2.29, "source": "Induction coil assembly (PMI SMARTCORE)", "co2ePerKg": 30 },
+      "heatingElement_external":  { "price": 1.78, "source": "External heat chamber (JTI HEATFLOW)", "co2ePerKg": 28 },
+      "pcbController_perUnit":    { "price": 3.68, "source": "MCU + BMS + memory", "co2ePerKg": 55 },
+      "display_amoled":           { "price": 4.06, "source": "AMOLED display module", "co2ePerKg": 45 },
+      "display_touchscreen":      { "price": 5.21, "source": "Touchscreen module", "co2ePerKg": 50 },
+      "display_led":              { "price": 0.51, "source": "LED indicator array", "co2ePerKg": 15 },
+      "housing_aluminium":        { "price": 2.29, "source": "Aluminium housing, CNC", "co2ePerKg": 12 },
+      "housing_plastic":          { "price": 1.14, "source": "Engineering plastic housing, injection moulded", "co2ePerKg": 6 },
+      "usbC_perUnit":             { "price": 0.44, "source": "USB-C port + cable", "co2ePerKg": 8 },
+      "packaging_perUnit":        { "price": 1.08, "source": "Carton + inserts + manual", "co2ePerKg": 3 }
+    },
+    "machineAssumptions": {
+      "smtLine":        { "capitalCost": 2286000, "lifeYears": 8, "operatingHoursPerYear": 5000, "powerCostPerHr": 15.20, "maintenancePercentOfDep": 6 },
+      "assemblyLine":   { "capitalCost": 571500, "lifeYears": 7, "operatingHoursPerYear": 4000, "powerCostPerHr": 5.70, "maintenancePercentOfDep": 5 },
+      "testingStation": { "capitalCost": 228600, "lifeYears": 6, "operatingHoursPerYear": 4000, "powerCostPerHr": 2.80, "maintenancePercentOfDep": 8 }
+    }
+  },
+
+  "products": [
+    {
+      "id": "glo-hilo",
+      "name": "BAT glo Hilo",
+      "brand": "BAT",
+      "category": "HTP Device",
+      "retailPrice": 37.00,
+      "supplierTier": "tier1",
+      "moq": { "current": 100000, "min": 20000, "max": 500000, "step": 10000, "unit": "units", "fixedCostPool": 3556000 },
+      "costTree": {
+        "name": "Device FOB",
+        "children": [
+          { "name": "Materials", "children": [
+            { "name": "Battery", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_perUnit" } },
+            { "name": "Heating Element (dual resistive)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_resistive" } },
+            { "name": "PCB Controller", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcbController_perUnit" } },
+            { "name": "AMOLED Display", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_amoled" } },
+            { "name": "Aluminium Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_aluminium" } },
+            { "name": "USB-C", "type": "material", "inputs": { "quantity": 1, "priceKey": "usbC_perUnit" } },
+            { "name": "Packaging", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_perUnit" } }
+          ]},
+          { "name": "Labour (CMT)", "children": [
+            { "name": "SMT", "type": "time_labour", "inputs": { "minutesPerUnit": 4.5 } },
+            { "name": "Assembly", "type": "time_labour", "inputs": { "minutesPerUnit": 6.5 } },
+            { "name": "Test & QC", "type": "time_labour", "inputs": { "minutesPerUnit": 2.5 } }
+          ]},
+          { "name": "Overheads", "children": [
+            { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 20 } }
+          ]},
+          { "name": "Factory Margin", "type": "percent_of_subtotal", "inputs": { "percent": 15 } }
+        ]
+      }
+    },
+    {
+      "id": "glo-hilo-plus",
+      "name": "BAT glo Hilo Plus",
+      "brand": "BAT",
+      "category": "HTP Device",
+      "retailPrice": 45.00,
+      "supplierTier": "tier1",
+      "moq": { "current": 80000, "min": 20000, "max": 400000, "step": 10000, "unit": "units", "fixedCostPool": 4064000 },
+      "costTree": {
+        "name": "Device FOB",
+        "children": [
+          { "name": "Materials", "children": [
+            { "name": "Battery", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_perUnit" } },
+            { "name": "Heating Element (dual resistive)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_resistive" } },
+            { "name": "PCB Controller", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcbController_perUnit" } },
+            { "name": "Touchscreen Display", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_touchscreen" } },
+            { "name": "Aluminium Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_aluminium" } },
+            { "name": "USB-C", "type": "material", "inputs": { "quantity": 1, "priceKey": "usbC_perUnit" } },
+            { "name": "Packaging", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_perUnit" } }
+          ]},
+          { "name": "Labour (CMT)", "children": [
+            { "name": "SMT", "type": "time_labour", "inputs": { "minutesPerUnit": 4.5 } },
+            { "name": "Assembly", "type": "time_labour", "inputs": { "minutesPerUnit": 8.0 } },
+            { "name": "Test & QC", "type": "time_labour", "inputs": { "minutesPerUnit": 3.0 } }
+          ]},
+          { "name": "Overheads", "children": [
+            { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 25 } }
+          ]},
+          { "name": "Factory Margin", "type": "percent_of_subtotal", "inputs": { "percent": 15 } }
+        ]
+      }
+    },
+    {
+      "id": "glo-hyper-pro-plus",
+      "name": "BAT glo Hyper Pro Plus",
+      "brand": "BAT",
+      "category": "HTP Device",
+      "retailPrice": 23.00,
+      "supplierTier": "tier2",
+      "moq": { "current": 150000, "min": 30000, "max": 800000, "step": 10000, "unit": "units", "fixedCostPool": 2794000 },
+      "costTree": {
+        "name": "Device FOB",
+        "children": [
+          { "name": "Materials", "children": [
+            { "name": "Battery", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_perUnit" } },
+            { "name": "Heating Element (resistive)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_resistive" } },
+            { "name": "PCB Controller", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcbController_perUnit" } },
+            { "name": "AMOLED Display", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_amoled" } },
+            { "name": "Plastic Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_plastic" } },
+            { "name": "USB-C", "type": "material", "inputs": { "quantity": 1, "priceKey": "usbC_perUnit" } },
+            { "name": "Packaging", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_perUnit" } }
+          ]},
+          { "name": "Labour (CMT)", "children": [
+            { "name": "SMT", "type": "time_labour", "inputs": { "minutesPerUnit": 4.0 } },
+            { "name": "Assembly", "type": "time_labour", "inputs": { "minutesPerUnit": 5.5 } },
+            { "name": "Test & QC", "type": "time_labour", "inputs": { "minutesPerUnit": 2.0 } }
+          ]},
+          { "name": "Overheads", "children": [
+            { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 18 } }
+          ]},
+          { "name": "Factory Margin", "type": "percent_of_subtotal", "inputs": { "percent": 12 } }
+        ]
+      }
+    },
+    {
+      "id": "glo-hyper-air",
+      "name": "BAT glo Hyper Air",
+      "brand": "BAT",
+      "category": "HTP Device",
+      "retailPrice": 10.00,
+      "supplierTier": "tier2",
+      "moq": { "current": 200000, "min": 50000, "max": 1000000, "step": 10000, "unit": "units", "fixedCostPool": 2286000 },
+      "costTree": {
+        "name": "Device FOB",
+        "children": [
+          { "name": "Materials", "children": [
+            { "name": "Battery", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_perUnit" } },
+            { "name": "Heating Element (resistive)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_resistive" } },
+            { "name": "PCB Controller", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcbController_perUnit" } },
+            { "name": "LED Indicators", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_led" } },
+            { "name": "Plastic Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_plastic" } },
+            { "name": "USB-C", "type": "material", "inputs": { "quantity": 1, "priceKey": "usbC_perUnit" } },
+            { "name": "Packaging", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_perUnit" } }
+          ]},
+          { "name": "Labour (CMT)", "children": [
+            { "name": "SMT", "type": "time_labour", "inputs": { "minutesPerUnit": 3.5 } },
+            { "name": "Assembly", "type": "time_labour", "inputs": { "minutesPerUnit": 4.5 } },
+            { "name": "Test & QC", "type": "time_labour", "inputs": { "minutesPerUnit": 1.5 } }
+          ]},
+          { "name": "Overheads", "children": [
+            { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 15 } }
+          ]},
+          { "name": "Factory Margin", "type": "percent_of_subtotal", "inputs": { "percent": 12 } }
+        ]
+      }
+    },
+    {
+      "id": "iqos-iluma-i-prime",
+      "name": "PMI IQOS ILUMA i PRIME",
+      "brand": "PMI",
+      "category": "HTP Device",
+      "retailPrice": 113.00,
+      "supplierTier": "tier1",
+      "moq": { "current": 50000, "min": 10000, "max": 300000, "step": 5000, "unit": "units", "fixedCostPool": 5715000 },
+      "costTree": {
+        "name": "Device FOB",
+        "children": [
+          { "name": "Materials", "children": [
+            { "name": "Battery", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_perUnit" } },
+            { "name": "Induction Coil (SMARTCORE)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_induction" } },
+            { "name": "PCB Controller", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcbController_perUnit" } },
+            { "name": "Touchscreen Display", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_touchscreen" } },
+            { "name": "Aluminium Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_aluminium" } },
+            { "name": "USB-C", "type": "material", "inputs": { "quantity": 1, "priceKey": "usbC_perUnit" } },
+            { "name": "Packaging", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_perUnit" } }
+          ]},
+          { "name": "Labour (CMT)", "children": [
+            { "name": "SMT", "type": "time_labour", "inputs": { "minutesPerUnit": 5.5 } },
+            { "name": "Assembly", "type": "time_labour", "inputs": { "minutesPerUnit": 9.0 } },
+            { "name": "Test & QC", "type": "time_labour", "inputs": { "minutesPerUnit": 3.5 } }
+          ]},
+          { "name": "Overheads", "children": [
+            { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 30 } }
+          ]},
+          { "name": "Factory Margin", "type": "percent_of_subtotal", "inputs": { "percent": 18 } }
+        ]
+      }
+    },
+    {
+      "id": "iqos-iluma-i",
+      "name": "PMI IQOS ILUMA i",
+      "brand": "PMI",
+      "category": "HTP Device",
+      "retailPrice": 88.00,
+      "supplierTier": "tier1",
+      "moq": { "current": 80000, "min": 20000, "max": 400000, "step": 10000, "unit": "units", "fixedCostPool": 4826000 },
+      "costTree": {
+        "name": "Device FOB",
+        "children": [
+          { "name": "Materials", "children": [
+            { "name": "Battery", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_perUnit" } },
+            { "name": "Induction Coil (SMARTCORE)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_induction" } },
+            { "name": "PCB Controller", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcbController_perUnit" } },
+            { "name": "Touchscreen Display", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_touchscreen" } },
+            { "name": "Plastic Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_plastic" } },
+            { "name": "USB-C", "type": "material", "inputs": { "quantity": 1, "priceKey": "usbC_perUnit" } },
+            { "name": "Packaging", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_perUnit" } }
+          ]},
+          { "name": "Labour (CMT)", "children": [
+            { "name": "SMT", "type": "time_labour", "inputs": { "minutesPerUnit": 5.0 } },
+            { "name": "Assembly", "type": "time_labour", "inputs": { "minutesPerUnit": 7.5 } },
+            { "name": "Test & QC", "type": "time_labour", "inputs": { "minutesPerUnit": 3.0 } }
+          ]},
+          { "name": "Overheads", "children": [
+            { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 25 } }
+          ]},
+          { "name": "Factory Margin", "type": "percent_of_subtotal", "inputs": { "percent": 16 } }
+        ]
+      }
+    },
+    {
+      "id": "iqos-iluma-i-one",
+      "name": "PMI IQOS ILUMA i ONE",
+      "brand": "PMI",
+      "category": "HTP Device",
+      "retailPrice": 50.00,
+      "supplierTier": "tier1",
+      "moq": { "current": 120000, "min": 30000, "max": 600000, "step": 10000, "unit": "units", "fixedCostPool": 4064000 },
+      "costTree": {
+        "name": "Device FOB",
+        "children": [
+          { "name": "Materials", "children": [
+            { "name": "Battery", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_perUnit" } },
+            { "name": "Induction Coil (SMARTCORE)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_induction" } },
+            { "name": "PCB Controller", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcbController_perUnit" } },
+            { "name": "LED Indicators", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_led" } },
+            { "name": "Plastic Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_plastic" } },
+            { "name": "USB-C", "type": "material", "inputs": { "quantity": 1, "priceKey": "usbC_perUnit" } },
+            { "name": "Packaging", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_perUnit" } }
+          ]},
+          { "name": "Labour (CMT)", "children": [
+            { "name": "SMT", "type": "time_labour", "inputs": { "minutesPerUnit": 4.0 } },
+            { "name": "Assembly", "type": "time_labour", "inputs": { "minutesPerUnit": 5.0 } },
+            { "name": "Test & QC", "type": "time_labour", "inputs": { "minutesPerUnit": 2.0 } }
+          ]},
+          { "name": "Overheads", "children": [
+            { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 18 } }
+          ]},
+          { "name": "Factory Margin", "type": "percent_of_subtotal", "inputs": { "percent": 14 } }
+        ]
+      }
+    },
+    {
+      "id": "iqos-iluma",
+      "name": "PMI IQOS ILUMA",
+      "brand": "PMI",
+      "category": "HTP Device",
+      "retailPrice": 62.00,
+      "supplierTier": "tier1",
+      "moq": { "current": 100000, "min": 25000, "max": 500000, "step": 10000, "unit": "units", "fixedCostPool": 4318000 },
+      "costTree": {
+        "name": "Device FOB",
+        "children": [
+          { "name": "Materials", "children": [
+            { "name": "Battery", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_perUnit" } },
+            { "name": "Induction Coil (SMARTCORE)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_induction" } },
+            { "name": "PCB Controller", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcbController_perUnit" } },
+            { "name": "LED Indicators", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_led" } },
+            { "name": "Aluminium Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_aluminium" } },
+            { "name": "USB-C", "type": "material", "inputs": { "quantity": 1, "priceKey": "usbC_perUnit" } },
+            { "name": "Packaging", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_perUnit" } }
+          ]},
+          { "name": "Labour (CMT)", "children": [
+            { "name": "SMT", "type": "time_labour", "inputs": { "minutesPerUnit": 4.5 } },
+            { "name": "Assembly", "type": "time_labour", "inputs": { "minutesPerUnit": 6.5 } },
+            { "name": "Test & QC", "type": "time_labour", "inputs": { "minutesPerUnit": 2.5 } }
+          ]},
+          { "name": "Overheads", "children": [
+            { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 22 } }
+          ]},
+          { "name": "Factory Margin", "type": "percent_of_subtotal", "inputs": { "percent": 15 } }
+        ]
+      }
+    },
+    {
+      "id": "ploom-aura",
+      "name": "JTI Ploom AURA",
+      "brand": "JTI",
+      "category": "HTP Device",
+      "retailPrice": 24.00,
+      "supplierTier": "tier2",
+      "moq": { "current": 200000, "min": 50000, "max": 800000, "step": 10000, "unit": "units", "fixedCostPool": 3302000 },
+      "costTree": {
+        "name": "Device FOB",
+        "children": [
+          { "name": "Materials", "children": [
+            { "name": "Battery", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_perUnit" } },
+            { "name": "External Heat Chamber (HEATFLOW)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_external" } },
+            { "name": "PCB Controller", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcbController_perUnit" } },
+            { "name": "LED Indicators", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_led" } },
+            { "name": "Aluminium Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_aluminium" } },
+            { "name": "USB-C", "type": "material", "inputs": { "quantity": 1, "priceKey": "usbC_perUnit" } },
+            { "name": "Packaging", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_perUnit" } }
+          ]},
+          { "name": "Labour (CMT)", "children": [
+            { "name": "SMT", "type": "time_labour", "inputs": { "minutesPerUnit": 4.0 } },
+            { "name": "Assembly", "type": "time_labour", "inputs": { "minutesPerUnit": 6.0 } },
+            { "name": "Test & QC", "type": "time_labour", "inputs": { "minutesPerUnit": 2.0 } }
+          ]},
+          { "name": "Overheads", "children": [
+            { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 20 } }
+          ]},
+          { "name": "Factory Margin", "type": "percent_of_subtotal", "inputs": { "percent": 12 } }
+        ]
+      }
+    },
+    {
+      "id": "ploom-cube",
+      "name": "JTI Ploom CUBE",
+      "brand": "JTI",
+      "category": "HTP Device",
+      "retailPrice": 24.00,
+      "supplierTier": "tier2",
+      "moq": { "current": 180000, "min": 40000, "max": 700000, "step": 10000, "unit": "units", "fixedCostPool": 3048000 },
+      "costTree": {
+        "name": "Device FOB",
+        "children": [
+          { "name": "Materials", "children": [
+            { "name": "Battery", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_perUnit" } },
+            { "name": "External Heat Chamber (HEATFLOW)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_external" } },
+            { "name": "PCB Controller", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcbController_perUnit" } },
+            { "name": "LED Indicators", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_led" } },
+            { "name": "Plastic Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_plastic" } },
+            { "name": "USB-C", "type": "material", "inputs": { "quantity": 1, "priceKey": "usbC_perUnit" } },
+            { "name": "Packaging", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_perUnit" } }
+          ]},
+          { "name": "Labour (CMT)", "children": [
+            { "name": "SMT", "type": "time_labour", "inputs": { "minutesPerUnit": 3.5 } },
+            { "name": "Assembly", "type": "time_labour", "inputs": { "minutesPerUnit": 5.0 } },
+            { "name": "Test & QC", "type": "time_labour", "inputs": { "minutesPerUnit": 1.5 } }
+          ]},
+          { "name": "Overheads", "children": [
+            { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 16 } }
+          ]},
+          { "name": "Factory Margin", "type": "percent_of_subtotal", "inputs": { "percent": 11 } }
+        ]
+      }
+    },
+    {
+      "id": "ploom-x-advanced",
+      "name": "JTI Ploom X Advanced",
+      "brand": "JTI",
+      "category": "HTP Device",
+      "retailPrice": 13.00,
+      "supplierTier": "tier2",
+      "moq": { "current": 250000, "min": 60000, "max": 1000000, "step": 10000, "unit": "units", "fixedCostPool": 2540000 },
+      "costTree": {
+        "name": "Device FOB",
+        "children": [
+          { "name": "Materials", "children": [
+            { "name": "Battery", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_perUnit" } },
+            { "name": "External Heat Chamber (HEATFLOW)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_external" } },
+            { "name": "PCB Controller", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcbController_perUnit" } },
+            { "name": "LED Indicators", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_led" } },
+            { "name": "Plastic Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_plastic" } },
+            { "name": "USB-C", "type": "material", "inputs": { "quantity": 1, "priceKey": "usbC_perUnit" } },
+            { "name": "Packaging", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_perUnit" } }
+          ]},
+          { "name": "Labour (CMT)", "children": [
+            { "name": "SMT", "type": "time_labour", "inputs": { "minutesPerUnit": 3.5 } },
+            { "name": "Assembly", "type": "time_labour", "inputs": { "minutesPerUnit": 4.5 } },
+            { "name": "Test & QC", "type": "time_labour", "inputs": { "minutesPerUnit": 1.5 } }
+          ]},
+          { "name": "Overheads", "children": [
+            { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 14 } }
+          ]},
+          { "name": "Factory Margin", "type": "percent_of_subtotal", "inputs": { "percent": 10 } }
+        ]
+      }
+    },
+    {
+      "id": "ploom-x",
+      "name": "JTI Ploom X",
+      "brand": "JTI",
+      "category": "HTP Device",
+      "retailPrice": 8.00,
+      "supplierTier": "tier2",
+      "moq": { "current": 300000, "min": 80000, "max": 1200000, "step": 20000, "unit": "units", "fixedCostPool": 2286000 },
+      "costTree": {
+        "name": "Device FOB",
+        "children": [
+          { "name": "Materials", "children": [
+            { "name": "Battery", "type": "material", "inputs": { "quantity": 1, "priceKey": "battery_perUnit" } },
+            { "name": "External Heat Chamber (HEATFLOW)", "type": "material", "inputs": { "quantity": 1, "priceKey": "heatingElement_external" } },
+            { "name": "PCB Controller", "type": "material", "inputs": { "quantity": 1, "priceKey": "pcbController_perUnit" } },
+            { "name": "LED Indicators", "type": "material", "inputs": { "quantity": 1, "priceKey": "display_led" } },
+            { "name": "Plastic Housing", "type": "material", "inputs": { "quantity": 1, "priceKey": "housing_plastic" } },
+            { "name": "USB-C", "type": "material", "inputs": { "quantity": 1, "priceKey": "usbC_perUnit" } },
+            { "name": "Packaging", "type": "material", "inputs": { "quantity": 1, "priceKey": "packaging_perUnit" } }
+          ]},
+          { "name": "Labour (CMT)", "children": [
+            { "name": "SMT", "type": "time_labour", "inputs": { "minutesPerUnit": 3.0 } },
+            { "name": "Assembly", "type": "time_labour", "inputs": { "minutesPerUnit": 4.0 } },
+            { "name": "Test & QC", "type": "time_labour", "inputs": { "minutesPerUnit": 1.5 } }
+          ]},
+          { "name": "Overheads", "children": [
+            { "name": "Factory Overhead", "type": "overhead", "inputs": { "minutesPerUnit": 12 } }
+          ]},
+          { "name": "Factory Margin", "type": "percent_of_subtotal", "inputs": { "percent": 10 } }
+        ]
+      }
+    }
+  ],
+
+  "competitors": {
+    "benchmarks": {
+      "bat":  { "name": "British American Tobacco", "fy2025": { "netSalesM": 32800, "grossMarginPct": 0, "operatingMarginPct": 0, "ngpSharePct": 18 } },
+      "pmi":  { "name": "Philip Morris International", "fy2025": { "netSalesM": 38500, "grossMarginPct": 0, "operatingMarginPct": 0, "ngpSharePct": 40 } },
+      "jti":  { "name": "Japan Tobacco International", "fy2025": { "netSalesM": 21500, "grossMarginPct": 0, "operatingMarginPct": 0, "ngpSharePct": 12 } }
+    },
+    "notes": "Brand-level financials only. Product-level comparisons are handled by the any-to-any compare tab."
+  },
+
+  "endToEnd": {
+    "notes": "Device-only landed cost. HTP devices are classified as consumer electronics — zero tariff in most developed markets, VAT applies at destination.",
+    "sourceCountries": [
+      { "id": "china",    "name": "China",    "flag": "🇨🇳" },
+      { "id": "poland",   "name": "Poland",   "flag": "🇵🇱" },
+      { "id": "malaysia", "name": "Malaysia", "flag": "🇲🇾" }
+    ],
+    "destinationMarkets": [
+      { "id": "uk",      "name": "United Kingdom", "vatRatePct": 20, "vatName": "VAT",             "flag": "🇬🇧" },
+      { "id": "germany", "name": "Germany",        "vatRatePct": 19, "vatName": "MwSt",            "flag": "🇩🇪" },
+      { "id": "japan",   "name": "Japan",          "vatRatePct": 10, "vatName": "Consumption Tax", "flag": "🇯🇵" },
+      { "id": "us",      "name": "United States",  "vatRatePct": 8.5, "vatName": "Sales Tax",      "flag": "🇺🇸" }
+    ],
+    "tradeRules": {
+      "insuranceRatePct": 0.5,
+      "wholesaleMarkupPct": 40,
+      "defaultTariffPct": 0,
+      "tariffByPair": {
+        "china>uk": 0, "china>germany": 0, "china>japan": 0, "china>us": 0,
+        "poland>uk": 0, "poland>germany": 0, "poland>japan": 0, "poland>us": 0,
+        "malaysia>uk": 0, "malaysia>germany": 0, "malaysia>japan": 0, "malaysia>us": 0
+      },
+      "freightByDest": { "uk": 1.08, "germany": 0.89, "japan": 0.76, "us": 1.35 },
+      "customsByDest": { "uk": 0.25, "germany": 0.19, "japan": 0.19, "us": 0.30 },
+      "inlandByDest": { "uk": 0.64, "germany": 0.57, "japan": 0.51, "us": 0.85 },
+      "carbonRules": {
+        "euEtsPricePerTonne": 85,
+        "euDestinations": ["germany"],
+        "cbamYearPct": { "2026": 2.5, "2028": 10, "2030": 48.5, "2034": 100 },
+        "currentYear": 2026,
+        "manufacturingCO2ePerUnit": 3.2,
+        "notes": "HTP devices are not currently in CBAM scope. Modelled as indicative scope-3 exposure to EU destinations."
+      }
+    }
+  }
+}
